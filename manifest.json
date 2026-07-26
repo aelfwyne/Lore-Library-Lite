@@ -2,7 +2,7 @@
   "display_name": "Lore Library & Campaign Manager",
   "loading_order": 10,
   "version": "1.0.0",
-  "author": "DangerDaza / Extracted Utility",
+  "author": Aelfwyne",
   "js": "index.js",
   "css": "style.css"
 }
