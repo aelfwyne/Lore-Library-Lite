@@ -8,6 +8,12 @@ It provides a full-featured three-panel desktop layout and an adaptive mobile in
 
 ---
 
+## Purpose
+
+A lightweight extraction of the excellent "Lore Library" feature from Doom's Enhancement Suite. Personally, this was the only part I wanted to use, as I use other tracking software. The Lore Library I find much easier to use and less laggy than the native world lore and lorebook editor. So I extracted it.
+
+Warning: This code is heavily altered from the original project as it was not written as a completely separate module. As such there may be undiscovered bugs. I highly recommend you **back up your work**. 
+
 ## Key Features
 
 * **Campaign & Library Organization**
