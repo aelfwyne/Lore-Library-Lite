@@ -14,6 +14,8 @@ A lightweight extraction of the excellent "Lore Library" feature from Doom's Enh
 
 Warning: This code is heavily altered from the original project as it was not written as a completely separate module. As such there may be undiscovered bugs. I highly recommend you **back up your work**. 
 
+![Preview Image](preview.png)
+
 ## Key Features
 
 * **Campaign & Library Organization**
