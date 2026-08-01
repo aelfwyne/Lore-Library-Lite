@@ -1,4 +1,4 @@
-# Lore Library & Campaign Manager
+# Lore Library Lite
 
 An enhanced Lorebook and Campaign Manager extension for **SillyTavern**. 
 It provides a full-featured three-panel desktop layout and an adaptive mobile interface to replace the native World Info interface with streamlined organization, bulk actions, and deep entry editing.
