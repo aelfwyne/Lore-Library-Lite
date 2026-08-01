@@ -19,6 +19,8 @@ Warning: This code is heavily altered from the original project as it was not wr
 ## Changes
 * **Feature Update 2**
   * AI Assisted Revisions - you can now have the AI suggest changes to a lore entry. Your current context will be sent to the LLM with specific instructions for update based on your selections. You can mark diffs to see what's changed. No changes are made automatically - you will copy and paste the revision into the main entry if you're satisfied with it. Presets for multiple different types of lore with choice of output as Narrative, Key:Value, or XML Tagged.
+  * Lock Icon added to prevent accidental loss of focus if your mouse tracks outside the window - top right of title bar.
+  * Fixed CSS Issue making checkboxes not showing their current state.
 * **Feature Update 1**
   * Delete Lorebook now requires the lorebook to be completely empty before you can delete the lorebook. You will need to delete all entries first. This is to ensure an accidental click and approval when you're trying to delete one entry doesn't delete your entire lorebook.
     
