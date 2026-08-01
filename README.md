@@ -48,3 +48,5 @@ Warning: This code is heavily altered from the original project as it was not wr
 * **Global World Info Control**
   * Directly modify global scan depth, context budget percentages, cap limits, insertion strategies, and recursive scan settings without opening native sub-menus.
 
+## Credits
+  * Originally extracted and forked out of [DangerDaza's Dooms Enhancement Suite](https://github.com/DangerDaza/Dooms-Enhancement-Suite) by **DangerDaza**
