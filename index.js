@@ -48,6 +48,8 @@ function injectModalHTML() {
                 <h3><i class="fa-solid fa-book-bookmark"></i> Lore Library</h3>
                 <div class="rpg-lb-spacer"></div>
                 <div class="rpg-lb-toggle" data-type="master" title="Toggle all lorebooks globally"></div>
+                <!-- ADDED: Lock Button -->
+                <button type="button" class="rpg-lb-lock" title="Lock modal (prevent accidental close)"><i class="fa-solid fa-lock-open"></i></button>
                 <button type="button" class="rpg-lb-close" id="rpg-lorebook-close">&times;</button>
             </div>
             <div class="rpg-lb-modal-body">

@@ -733,13 +733,33 @@ export function initLorebookEventDelegation() {
         if (modal) modal.close();
     });
 
+    // UPDATED: Modal backdrop click handler
     $modal.on('click', function (e) {
         if (e.target === $modal[0]) {
+            // Prevent close if the lock button has the 'is-locked' class
+            if ($modal.find('.rpg-lb-lock').hasClass('is-locked')) {
+                return;
+            }
             const modal = getLorebookModal();
             if (modal) modal.close();
         }
     });
 
+    // ADDED: Lock button toggle handler
+    $modal.on('click', '.rpg-lb-lock', function () {
+        const $btn = $(this);
+        const $icon = $btn.find('i');
+        
+        $btn.toggleClass('is-locked');
+        
+        if ($btn.hasClass('is-locked')) {
+            $icon.removeClass('fa-lock-open').addClass('fa-lock');
+            $btn.attr('title', 'Unlock modal');
+        } else {
+            $icon.removeClass('fa-lock').addClass('fa-lock-open');
+            $btn.attr('title', 'Lock modal (prevent accidental close)');
+        }
+    });
 
 $modal.on('click', '.rpg-lb-btn-suggest-revision', async function (e) {
         e.preventDefault();

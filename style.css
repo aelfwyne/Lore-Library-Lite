@@ -49,6 +49,27 @@
 }
 .rpg-lb-close:hover { opacity: 1; color: #e94560; }
 
+/* Add beneath .rpg-lb-close:hover */
+.rpg-lb-lock {
+    background: none; 
+    border: none; 
+    color: #aaa;
+    font-size: 1.25em; 
+    cursor: pointer; 
+    padding: 2px 8px;
+    line-height: 1; 
+    opacity: 0.7; 
+    transition: opacity 0.2s, color 0.2s;
+}
+.rpg-lb-lock:hover { 
+    opacity: 1; 
+    color: #fff; 
+}
+.rpg-lb-lock.is-locked { 
+    color: #e94560; /* Matches your --rpg-highlight accent */
+    opacity: 1; 
+}
+
 /* Modal Body & Three-Panel Layout */
 .rpg-lb-modal-body { flex: 1; overflow: hidden; min-height: 0; }
 .rpg-lb-list-layout { display: flex; flex: 1; height: 100%; min-height: 0; overflow: hidden; }
@@ -312,4 +333,58 @@
     cursor: not-allowed;
     background: rgba(0, 0, 0, 0.2) !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Container for the row of checkboxes to fix squished spacing */
+.rpg-lb-wi-checkbox-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+/* Align the label contents */
+.rpg-lb-wi-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 0.85em;
+    user-select: none;
+}
+
+/* Style the custom checkbox square */
+.rpg-lb-check-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: 1px solid rgba(74, 123, 167, 0.4);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.25);
+    transition: all 0.2s ease;
+}
+
+/* Hide the checkmark icon by default */
+.rpg-lb-wi-checkbox input[type="checkbox"] + .rpg-lb-check-box i {
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s ease;
+    font-size: 0.75em;
+}
+
+/* Show and style the checkmark when checked */
+.rpg-lb-wi-checkbox input[type="checkbox"]:checked + .rpg-lb-check-box i {
+    opacity: 1;
+    transform: scale(1);
+    color: #2ecc71; /* Green accent for active state */
+}
+
+/* Optional: Slightly highlight the box itself when checked */
+.rpg-lb-wi-checkbox input[type="checkbox"]:checked + .rpg-lb-check-box {
+    border-color: rgba(46, 204, 113, 0.5);
+    background: rgba(46, 204, 113, 0.1);
 }
