@@ -279,3 +279,37 @@
     background: rgba(74, 123, 167, 0.1) !important;
     color: #fff !important;
 }
+
+/* Suggest Revision Button Theme Fix */
+.rpg-lb-btn-suggest-revision {
+    background: rgba(74, 123, 167, 0.15) !important;
+    border: 1px solid rgba(74, 123, 167, 0.25) !important;
+    color: #ccc !important;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    outline: none !important;
+    box-shadow: none !important;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.rpg-lb-btn-suggest-revision:hover {
+    background: rgba(74, 123, 167, 0.3) !important;
+    border-color: #4a7ba7 !important;
+    color: #fff !important;
+}
+
+.rpg-lb-btn-suggest-revision:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}

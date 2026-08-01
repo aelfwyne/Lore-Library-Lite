@@ -509,6 +509,54 @@ function buildEditorHtml(worldName, uid, entry, isExpanded) {
 
     html += '</div>';
 
+	// --- AI Revision Section ---
+    html += '<div class="rpg-lb-form-section rpg-lb-ai-revision-section">';
+    html += '<div class="rpg-lb-section-divider collapsed"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Revision Assistant <i class="fa-solid fa-chevron-down rpg-lb-section-toggle"></i></div>';
+    html += '<div class="rpg-lb-collapsible-section" style="display:none; padding-top: 8px;">';
+    
+	// Dropdown Row
+    html += '<div class="rpg-lb-form-row" style="margin-bottom: 8px;">';
+    html += '<div class="rpg-lb-field-group md"><div class="rpg-lb-field-label"><i class="fa-solid fa-tags"></i> Lore Type</div>';
+    html += `<select class="rpg-lb-select rpg-lb-type-select" data-world="${w}" data-uid="${uid}">`;
+    html += '<option value="NPC" selected>NPC</option>';
+    html += '<option value="Location">Location</option>';
+    html += '<option value="Item">Item</option>';
+    html += '<option value="Event">Event</option>';
+    html += '<option value="Scene Summary">Scene Summary</option>';
+    html += '<option value="Scenario">Scenario</option>';
+    html += '<option value="Rules">Rules</option>';
+    html += '</select></div>';
+
+    html += '<div class="rpg-lb-field-group md"><div class="rpg-lb-field-label"><i class="fa-solid fa-file-code"></i> Format</div>';
+    html += `<select class="rpg-lb-select rpg-lb-format-select" data-world="${w}" data-uid="${uid}">`;
+    html += '<option value="Narrative" selected>Narrative</option>';
+    html += '<option value="Key: Value">Key: Value</option>';
+    html += '<option value="XML Tagged">XML Tagged</option>';
+    html += '</select></div>';
+    html += '</div>';
+
+    // Prompt Textarea
+    html += `<div class="rpg-lb-field-group" style="margin-bottom: 8px;">`;
+    html += `<div class="rpg-lb-field-label"><i class="fa-solid fa-comment-dots"></i> Update Lore Prompt</div>`;
+    html += `<textarea class="rpg-lb-textarea rpg-lb-update-prompt" data-world="${w}" data-uid="${uid}" rows="2" placeholder="e.g., Update this entry to reflect that the character lost their left sword in the last fight..."></textarea>`;
+    html += `</div>`;
+
+	html += `<button type="button" class="rpg-lb-btn-suggest-revision" data-world="${w}" data-uid="${uid}" style="margin-bottom: 8px; width: 100%;"><i class="fa-solid fa-bolt"></i> Suggest Revision</button>`;
+
+    // Preview Area
+    html += `<div class="rpg-lb-field-group">`;
+    html += `<div class="rpg-lb-field-label" style="display: flex; justify-content: space-between; align-items: center;">`;
+    html += `<span><i class="fa-solid fa-file-pen"></i> Revision Preview (Temporary)</span>`;
+    html += `<label class="rpg-lb-wi-checkbox" style="margin: 0;"><input type="checkbox" class="rpg-lb-toggle-diff"><span class="rpg-lb-check-box"><i class="fa-solid fa-check"></i></span> Show Diff</label>`;
+    html += `</div>`;
+    
+    html += `<textarea class="rpg-lb-textarea rpg-lb-revision-preview" rows="5" placeholder="AI generated revision will appear here..."></textarea>`;
+    html += `<div class="rpg-lb-revision-diff-view" style="display: none; min-height: 110px; padding: 8px; border: 1px solid var(--rpg-accent, #555); border-radius: 4px; background: rgba(0,0,0,0.2); font-family: monospace; font-size: 0.9em; overflow-y: auto; max-height: 250px;"></div>`;
+    html += `</div>`;
+
+    html += '</div></div>';
+    // ---------------------------
+
     html += '<div class="rpg-lb-editor-actions">';
     html += `<button class="rpg-lb-entry-action-btn rpg-lb-entry-delete" data-world="${w}" data-uid="${uid}" title="Delete"><i class="fa-solid fa-trash"></i> Delete</button>`;
     html += '</div>';
@@ -689,6 +737,73 @@ export function initLorebookEventDelegation() {
         if (e.target === $modal[0]) {
             const modal = getLorebookModal();
             if (modal) modal.close();
+        }
+    });
+
+
+$modal.on('click', '.rpg-lb-btn-suggest-revision', async function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const $btn = $(this);
+        const $editor = $btn.closest('.rpg-lb-editor, .rpg-lb-entry');
+        const worldName = $btn.data('world');
+        const uid = Number($btn.data('uid'));
+
+        const $promptInput = $editor.find('.rpg-lb-update-prompt');
+        const $previewBox = $editor.find('.rpg-lb-revision-preview');
+        const $typeSelect = $editor.find('.rpg-lb-type-select');
+        const $formatSelect = $editor.find('.rpg-lb-format-select');
+
+        const promptText = $promptInput.val()?.trim();
+        const loreType = $typeSelect.val() || 'NPC';
+        const format = $formatSelect.val() || 'Narrative';
+
+        const data = await lorebookAPI.loadWorldData(worldName);
+        if (!data || !data.entries[uid]) {
+            alert('Failed to load entry details.');
+            return;
+        }
+
+        const entry = data.entries[uid];
+        
+        // Cache original text for the diff viewer
+        $previewBox.data('original-content', entry.content || '');
+
+        const originalBtnText = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Generating Revision...');
+        $previewBox.val('Thinking with full chat context...');
+        
+        // Force textarea view when generating new content
+        $editor.find('.rpg-lb-toggle-diff').prop('checked', false).trigger('change');
+
+        try {
+            const result = await lorebookAPI.suggestEntryRevision(promptText, entry, loreType, format);
+            $previewBox.val(result);
+        } catch (err) {
+            $previewBox.val(`[Error generating revision: ${err.message}]`);
+        } finally {
+            $btn.prop('disabled', false).html(originalBtnText);
+        }
+    });
+
+    $modal.on('change', '.rpg-lb-toggle-diff', function () {
+        const $editor = $(this).closest('.rpg-lb-editor, .rpg-lb-entry');
+        const showDiff = $(this).is(':checked');
+        const $previewBox = $editor.find('.rpg-lb-revision-preview');
+        const $diffView = $editor.find('.rpg-lb-revision-diff-view');
+
+        if (showDiff) {
+            const originalText = $previewBox.data('original-content') || '';
+            const revisedText = $previewBox.val() || '';
+            
+            $diffView.html(generateDiffHtml(originalText, revisedText));
+            
+            $previewBox.hide();
+            $diffView.show();
+        } else {
+            $previewBox.show();
+            $diffView.hide();
         }
     });
 
@@ -1470,3 +1585,52 @@ function parseFieldValue(field, rawValue, $el) {
     }
     return rawValue;
 }
+
+/**
+ * Generates an HTML diff between two strings.
+ * @param {string} oldStr - The original content
+ * @param {string} newStr - The revised content
+ * @returns {string} Formatted HTML with <ins> and <del> styles
+ */
+function generateDiffHtml(oldStr, newStr) {
+    const escape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const o = oldStr.split(/(\s+)/);
+    const n = newStr.split(/(\s+)/);
+    
+    // Build LCS matrix
+    const matrix = Array(o.length + 1).fill(null).map(() => Array(n.length + 1).fill(0));
+    for (let i = 1; i <= o.length; i++) {
+        for (let j = 1; j <= n.length; j++) {
+            if (o[i - 1] === n[j - 1]) {
+                matrix[i][j] = matrix[i - 1][j - 1] + 1;
+            } else {
+                matrix[i][j] = Math.max(matrix[i - 1][j], matrix[i][j - 1]);
+            }
+        }
+    }
+
+    // Backtrack to find differences
+    let i = o.length, j = n.length;
+    const diff = [];
+    while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && o[i - 1] === n[j - 1]) {
+            diff.unshift({ type: 'same', val: o[i - 1] });
+            i--; j--;
+        } else if (j > 0 && (i === 0 || matrix[i][j - 1] >= matrix[i - 1][j])) {
+            diff.unshift({ type: 'add', val: n[j - 1] });
+            j--;
+        } else if (i > 0 && (j === 0 || matrix[i][j - 1] < matrix[i - 1][j])) {
+            diff.unshift({ type: 'del', val: o[i - 1] });
+            i--;
+        }
+    }
+
+    // Render HTML
+    return diff.map(part => {
+        if (part.type === 'add') return `<span style="background: rgba(0, 255, 0, 0.2); color: #8f8;">${escape(part.val)}</span>`;
+        if (part.type === 'del') return `<span style="background: rgba(255, 0, 0, 0.2); color: #f88; text-decoration: line-through;">${escape(part.val)}</span>`;
+        return escape(part.val);
+    }).join('').replace(/\n/g, '<br>');
+}
+
+

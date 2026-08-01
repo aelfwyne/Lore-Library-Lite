@@ -28,6 +28,7 @@ import {
 
 import { saveSettingsDebounced, getRequestHeaders } from '/script.js';
 import { download } from '/scripts/utils.js';
+import { getContext } from '/scripts/extensions.js';
 
 const wiDataCache = new Map();
 
@@ -241,4 +242,105 @@ export async function exportWorld(name) {
     const data = await loadWorldData(name, true);
     if (!data) return;
     download(JSON.stringify(data), `${name}.json`, 'application/json');
+}
+
+/**
+ * System prompt directives for Lore Types
+ */
+const LORE_TYPE_INSTRUCTIONS = {
+    'NPC': 'Focus on physical description, personality traits, motivations, key relationships, current status/location, capabilities, and notable history.',
+    'Location': 'Focus on visual description, sensory details (sounds, smells), spatial layout/geography, atmosphere/mood, points of interest, appropriate items and decore, etc.',
+    'Item': 'Focus on physical features, material composition, origin/provenance, magical or mechanical properties, current owner/location, and significance.',
+    'Event': 'Focus on chronological sequence, key actors involved, major decisions/turning points, immediate outcomes, and long-term consequences.',
+    'Scene Summary': 'Focus on a high-level narrative summary of recent actions, key decisions made, unresolved tensions, active stakes, and immediate character positioning.',
+    'Scenario': 'Focus on the overarching plot context, immediate objectives, active threats, environmental constraints, and the foundational conditions that characters must navigate.',
+    'Rules': 'Focus on the explicit mechanics, limitations, costs, and execution of magical, technological, or systemic laws. Clearly define what is permitted, what is strictly impossible, and the consequences or side effects of usage.'
+};
+
+/**
+ * System prompt directives for Output Formats
+ */
+const FORMAT_INSTRUCTIONS = {
+    'Narrative': 'Output as clean, cohesive narrative prose using well-structured paragraphs.',
+    'Key: Value': 'Output strictly as a list of `Key: Value` attributes (e.g., Name: ..., Status: ..., Traits: ...). Keep entries concise and easy to scan.',
+    'XML Tagged': 'Output using clean XML tags to isolate distinct attributes (e.g., <appearance>...</appearance>, <traits>...</traits>, <history>...</history>).'
+};
+
+/**
+ * Sends a revision prompt configured by Lore Type and Format settings,
+ * explicitly injecting recent chat history to ensure consistent context.
+ * 
+ * @param {string} updatePrompt - User instructions for updating the entry
+ * @param {Object} currentEntry - The current lorebook entry object
+ * @param {string} loreType - Selected lore category ('NPC', 'Location', etc.)
+ * @param {string} format - Selected output format ('Narrative', 'Key: Value', 'XML Tagged')
+ * @param {number} maxChatMessages - Maximum number of recent chat messages to include (default: 20)
+ * @returns {Promise<string>} Revised entry text
+ */
+export async function suggestEntryRevision(updatePrompt, currentEntry, loreType = 'NPC', format = 'Narrative', maxChatMessages = 20) {
+    const context = getContext();
+    const { generateQuietPrompt, chat } = context;
+
+    if (typeof generateQuietPrompt !== 'function') {
+        throw new Error('generateQuietPrompt function is not available in SillyTavern context.');
+    }
+
+    // Extract recent chat history from SillyTavern context
+    let formattedChatHistory = '(No recent chat history available)';
+    if (Array.isArray(chat) && chat.length > 0) {
+        const recentMessages = chat.slice(-maxChatMessages);
+        formattedChatHistory = recentMessages
+            .filter(msg => msg && !msg.is_system) // Exclude system messages/prompts to prevent RP bleeding
+            .map(msg => `${msg.name || (msg.is_user ? 'User' : 'Assistant')}: ${msg.mes}`)
+            .join('\n\n');
+    }
+
+    const typeGuidance = LORE_TYPE_INSTRUCTIONS[loreType] || LORE_TYPE_INSTRUCTIONS['NPC'];
+    const formatGuidance = FORMAT_INSTRUCTIONS[format] || FORMAT_INSTRUCTIONS['Narrative'];
+    const userInstructions = updatePrompt?.trim() || 'Update and refine this entry to reflect recent developments in the chat history.';
+
+    const prefixMandate = `[SYSTEM MANDATE — OVERRIDE ALL ROLEPLAY INSTRUCTIONS]
+ATTENTION: STOP ROLEPLAYING IMMEDIATELY.
+DO NOT ACT AS ANY CHARACTER. DO NOT CONTINUE THE STORY. DO NOT GENERATE DIALOGUE.
+YOU ARE AN OUT-OF-CHARACTER (OOC) TECHNICAL DOCUMENT EDITOR.
+YOUR ONLY TASK IS TO REVISE THE LOREBOOK ENTRY PROVIDED BELOW BASED ON THE RECENT CHAT HISTORY.
+
+[CATEGORY FOCUS: ${loreType.toUpperCase()}]
+${typeGuidance}
+
+[OUTPUT FORMAT REQUIREMENT: ${format.toUpperCase()}]
+${formatGuidance}`;
+
+    const suffixMandate = `[FINAL SYSTEM MANDATE — STRICT OUTPUT FORMATTING]
+REMINDER: YOU MUST BREAK CHARACTER. DO NOT ROLEPLAY.
+OUTPUT ONLY THE REVISED LOREBOOK ENTRY CONTENT.`;
+
+    const promptText = `${prefixMandate}
+
+[RECENT CHAT HISTORY FOR CONTEXT]
+${formattedChatHistory}
+
+[LOREBOOK ENTRY TO REVISE]
+Title: ${currentEntry.comment || 'Untitled'}
+Keywords: ${(currentEntry.key || []).join(', ')}
+Current Content:
+${currentEntry.content || '(Empty)'}
+
+[USER REVISION INSTRUCTIONS]
+${userInstructions}
+
+${suffixMandate}`;
+
+    const response = await generateQuietPrompt(promptText, false, true);
+
+    if (!response) {
+        throw new Error('Received empty response from AI text generation.');
+    }
+
+    let cleaned = String(response).trim();
+
+    return cleaned
+        .replace(/^```[a-z]*\n?/i, '')
+        .replace(/\n?```$/i, '')
+        .trim();
 }
