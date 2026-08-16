@@ -58,10 +58,11 @@ function injectModalHTML() {
     <div id="rpg-lorebook-modal" class="rpg-lb-modal" style="display: none;">
         <!-- Existing modal content remains untouched -->
         <div class="rpg-lb-modal-content">
-            <div class="rpg-lb-modal-header">
+			<div class="rpg-lb-modal-header">
                 <h3><i class="fa-solid fa-book-bookmark"></i> Lore Library</h3>
                 <div class="rpg-lb-spacer"></div>
-                <div class="rpg-lb-toggle" data-type="master" title="Toggle all lorebooks globally"></div>
+                <div class="rpg-lb-toggle" data-type="master" title="Master Toggle (Global): Toggle all lorebooks globally across ALL chats and characters."></div>
+                <button type="button" class="rpg-lb-fullscreen" title="Toggle fullscreen view"><i class="fa-solid fa-maximize"></i></button>
                 <button type="button" class="rpg-lb-lock" title="Lock modal (prevent accidental close)"><i class="fa-solid fa-lock-open"></i></button>
                 <button type="button" class="rpg-lb-close" id="rpg-lorebook-close">&times;</button>
             </div>
@@ -94,22 +95,28 @@ function injectModalHTML() {
 }
 
 function interceptNativeWIButton() {
-    console.warn("[Lore Library] Binding capture-phase interceptor to click events.");
+    console.warn("[Lore Library] Binding capture-phase interceptor to click and touch events.");
     
-    document.addEventListener('click', function (e) {
-        // DIAGNOSTIC NUKE: Log EVERY single click during capture phase
-        console.warn("[Lore Library] RAW CLICK DETECTED. Target element:", e.target);
-        console.warn("[Lore Library] Target ID:", e.target.id, " | Target Classes:", e.target.className);
-
-        // Broadened the net to catch standard title attributes as well
-        const target = e.target.closest('#world_info_button, .world_info_button, [title="World Info"], [title="World info"]');
+    const triggerHandler = function (e) {
+        // Expand the selector to capture mobile drawer buttons, nav items, and localized data-i18n attributes in ST mobile UI
+        const target = e.target.closest([
+            '#world_info_button',
+            '#rm_button_world_info',
+            '#nav-world-info',
+            '#option_world_info',
+            '.world_info_button',
+            '[title*="World Info" i]',
+            '[title*="World info" i]',
+            '[data-i18n*="World Info" i]',
+            '[data-i18n*="World info" i]',
+            '[aria-label*="World Info" i]'
+        ].join(', '));
         
         if (target) {
-            console.warn(`[Lore Library] CLICK INTERCEPTED on World Info button!`);
+            console.warn("[Lore Library] Click/Touch intercepted on World Info button:", target);
             
             const settings = getSettings();
             if (settings.enabled && settings.lorebook.enabled) {
-                console.warn("[Lore Library] Settings check passed. Hijacking click.");
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
@@ -120,12 +127,15 @@ function interceptNativeWIButton() {
                 } catch (err) {
                     console.error("[Lore Library] CRASH inside openLorebookModal:", err);
                 }
-            } else {
-                console.warn("[Lore Library] Settings indicate extension is disabled. Letting native UI handle click.");
             }
         }
-    }, true); 
+    };
+
+    // Listen on document during capture phase for click events
+    document.addEventListener('click', triggerHandler, true);
 }
+
+
 $(document).ready(() => {
     console.warn("[Lore Library] STEP 3: DOCUMENT READY fired. Booting up extension...");
     

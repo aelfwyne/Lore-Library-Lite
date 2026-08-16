@@ -73,7 +73,6 @@ export function resetLorebookViewState() {
     selectedBook = null;
     selectedEntry = null;
     expandedEditor = false;
-	// Pull the saved state, default to 'order' if none exists
     currentSortMode = getSettings().lorebook?.lastSortMode || 'order';
 }
 
@@ -148,15 +147,21 @@ function renderLeftPanel() {
                 : books;
         if (visibleBooks.length === 0 && lastFilter !== 'all') continue;
 
+		const allBooksActive = books.length > 0 && activeInCampaign === books.length;
+
         html += `<div class="rpg-lb-campaign-group" data-campaign="${id}">`;
         html += `<div class="rpg-lb-campaign-header ${isCollapsed ? 'collapsed' : ''}" data-campaign="${id}">`;
         const iconClass = campaign.icon || 'fa-folder';
         const iconColor = campaign.color ? ` style="color: ${escapeHtml(campaign.color)};"` : '';
         html += `<i class="fa-solid ${escapeHtml(iconClass)} rpg-lb-campaign-icon" data-campaign="${id}"${iconColor} title="Click to change icon"></i>`;
-        html += `<span class="rpg-lb-campaign-name">${escapeHtml(campaign.name)}</span>`;
+
+		html += `<span class="rpg-lb-campaign-name">${escapeHtml(campaign.name)}</span>`;
         html += `<span class="rpg-lb-campaign-stats">${activeInCampaign}/${books.length}</span>`;
+        // Tooltip clarifies that toggling the library folder activates/deactivates every lorebook inside it globally across all chats and characters
+        html += `<div class="rpg-lb-toggle rpg-lb-campaign-toggle ${allBooksActive ? 'active' : ''}" data-type="campaign" data-campaign="${id}" title="Library Level (Global): Toggle all lorebooks in '${escapeHtml(campaign.name)}' globally across ALL chats and characters."></div>`;
         html += `<button class="rpg-lb-campaign-delete" data-campaign="${id}" title="Delete"><i class="fa-solid fa-trash"></i></button>`;
-        html += `<i class="fa-solid fa-chevron-down rpg-lb-campaign-chevron"></i>`;
+
+        html += `<i class="fa-solid fa-chevron-down rpg-lb-campaign-chevron ${isCollapsed ? '' : 'rotated'}"></i>`;
         html += '</div>';
 
         html += `<div class="rpg-lb-campaign-body" ${isCollapsed ? 'style="display:none;"' : ''}>`;
@@ -167,6 +172,7 @@ function renderLeftPanel() {
     }
 
     if (unfiled.length > 0) {
+        const isUnfiledCollapsed = campaignManager.isCampaignCollapsed('unfiled');
         const visibleUnfiled = lastFilter === 'active'
             ? unfiled.filter(b => activeNames.includes(b))
             : lastFilter === 'inactive'
@@ -175,13 +181,13 @@ function renderLeftPanel() {
 
         if (visibleUnfiled.length > 0 || lastFilter === 'all') {
             html += '<div class="rpg-lb-campaign-group unfiled-group" data-campaign="unfiled">';
-            html += '<div class="rpg-lb-campaign-header collapsed" data-campaign="unfiled">';
+            html += `<div class="rpg-lb-campaign-header ${isUnfiledCollapsed ? 'collapsed' : ''}" data-campaign="unfiled">`;
             html += '<i class="fa-solid fa-folder-open rpg-lb-campaign-icon"></i>';
             html += '<span class="rpg-lb-campaign-name">Unfiled</span>';
             html += `<span class="rpg-lb-campaign-stats">${unfiled.length}</span>`;
-            html += '<i class="fa-solid fa-chevron-down rpg-lb-campaign-chevron"></i>';
+            html += `<i class="fa-solid fa-chevron-down rpg-lb-campaign-chevron ${isUnfiledCollapsed ? '' : 'rotated'}"></i>`;
             html += '</div>';
-            html += '<div class="rpg-lb-campaign-body" style="display:none;">';
+            html += `<div class="rpg-lb-campaign-body" ${isUnfiledCollapsed ? 'style="display:none;"' : ''}>`;
             for (const worldName of unfiled) {
                 html += buildTreeBookHtml(worldName, activeNames, lastFilter);
             }
@@ -248,15 +254,17 @@ function buildTreeBookHtml(worldName, activeNames, filter) {
     if (filter === 'active' && !isActive) return '';
     if (filter === 'inactive' && isActive) return '';
 
-    let html = `<div class="rpg-lb-tree-book ${isActive ? 'active-book' : 'inactive'} ${isSelected ? 'selected' : ''}" data-world="${w}">`;
-    html += `<div class="rpg-lb-toggle ${isActive ? 'active' : ''}" data-type="book" data-world="${w}"></div>`;
+
+	let html = `<div class="rpg-lb-tree-book ${isActive ? 'active-book' : 'inactive'} ${isSelected ? 'selected' : ''}" data-world="${w}">`;
+    // Tooltip explicitly clarifies that this toggle activates the lorebook globally across all chats and characters in SillyTavern (Global World Info scope), not just the current active conversation
+    html += `<div class="rpg-lb-toggle ${isActive ? 'active' : ''}" data-type="book" data-world="${w}" title="Lorebook Level (Global): Toggle '${w}' (${isActive ? 'Active' : 'Inactive'}). When active, entries are scanned globally across ALL chats and characters."></div>`;
     html += `<i class="fa-solid fa-book rpg-lb-tree-book-icon"></i>`;
+
     html += `<span class="rpg-lb-tree-book-name">${w}</span>`;
     html += `<span class="rpg-lb-tree-book-badge">...</span>`;
     html += '</div>';
     return html;
 }
-
 
 function renderMiddlePanel() {
     let html = '<section class="rpg-lb-panel-middle">';
@@ -283,7 +291,6 @@ function renderMiddlePanel() {
         html += '<div class="rpg-lb-inactive-banner"><i class="fa-solid fa-eye-slash"></i> Book is deactivated — entries won\'t be scanned</div>';
     }
 
-    // Separate entry search input next to the sorting dropdown
     html += '<div class="rpg-lb-panel-toolbar" style="display: flex; gap: 8px; align-items: center;">';
     html += '<select class="rpg-lb-entry-sort" title="Sort entries" style="flex: 1;">';
     html += `<option value="order" ${currentSortMode === 'order' ? 'selected' : ''}>By Order</option>`;
@@ -320,7 +327,7 @@ async function loadMiddlePanelEntries(worldName) {
         return;
     }
 
-	middlePanelData = data;
+    middlePanelData = data;
     middlePanelEntries = lorebookAPI.getEntriesSorted(data, currentSortMode);
 
     let html = '';
@@ -423,7 +430,7 @@ function buildEditorHtml(worldName, uid, entry, isExpanded) {
 
     let html = '<div class="rpg-lb-editor" data-world="' + w + '" data-uid="' + uid + '">';
 
-html += '<div class="rpg-lb-editor-header">';
+    html += '<div class="rpg-lb-editor-header">';
     html += `<span class="rpg-lb-editor-title"><i class="fa-solid fa-scroll"></i> ${escapeHtml(entry.comment || `Entry ${uid}`)}</span>`;
     if (!isExpanded) {
         html += '<button class="rpg-lb-expand-btn" title="Expand to full width"><i class="fa-solid fa-expand"></i></button>';
@@ -431,12 +438,10 @@ html += '<div class="rpg-lb-editor-header">';
     }
     html += '</div>';
 
-    // 1. Name / Title row
     html += '<div class="rpg-lb-form-section"><div class="rpg-lb-form-row">';
     html += `<div class="rpg-lb-field-group"><div class="rpg-lb-field-label"><i class="fa-solid fa-tag"></i> Title / Memo</div><input class="rpg-lb-input" type="text" value="${escapeHtml(entry.comment || '')}" data-world="${w}" data-uid="${uid}" data-field="comment"></div>`;
     html += '</div></div>';
 
-    // 2. Status, UID, Position, and Depth on the same row below name
     const posVal = entry.position ?? 0;
     const roleVal = entry.role ?? 0;
     html += '<div class="rpg-lb-form-section"><div class="rpg-lb-form-row">';
@@ -468,7 +473,6 @@ html += '<div class="rpg-lb-editor-header">';
     html += `<input class="rpg-lb-input" type="text" value="${escapeHtml(entry.outletName || '')}" data-world="${w}" data-uid="${uid}" data-field="outletName" placeholder="Outlet Name"></div>`;
     html += '</div></div>';
 
-    // 3. Keywords row: Primary, Booleans/Logic in between, Secondary
     html += '<div class="rpg-lb-keywords-card compact-row">';
     html += '<div class="rpg-lb-kw-section"><div class="rpg-lb-kw-section-header"><div class="rpg-lb-field-label"><i class="fa-solid fa-key"></i> Primary Keywords</div></div>';
     html += `<textarea class="rpg-lb-input rpg-lb-kw-textarea" data-world="${w}" data-uid="${uid}" data-field="key" rows="2" placeholder="Comma-separated keywords">${(entry.key || []).join(', ')}</textarea></div>`;
@@ -487,14 +491,12 @@ html += '<div class="rpg-lb-editor-header">';
     html += '<div class="rpg-lb-kw-section"><div class="rpg-lb-kw-section-header"><div class="rpg-lb-field-label"><i class="fa-solid fa-key"></i> Secondary Keywords</div></div>';
     html += `<textarea class="rpg-lb-input rpg-lb-kw-textarea secondary" data-world="${w}" data-uid="${uid}" data-field="keysecondary" rows="2" placeholder="Comma-separated secondary keywords">${(entry.keysecondary || []).join(', ')}</textarea></div>`;
     html += '</div>';
-	
 
-	html += '<div class="rpg-lb-form-section">';
-	html += '<div class="rpg-lb-field-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">';
-	html += '<span><i class="fa-solid fa-align-left"></i> Content</span>';
-	html += `<button type="button" class="rpg-lb-btn-popout" data-world="${w}" data-uid="${uid}" style="background: rgba(74, 123, 167, 0.15); border: 1px solid rgba(74, 123, 167, 0.3); color: #ccc; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 0.9em; transition: background 0.2s;"><i class="fa-solid fa-expand"></i> Pop-out Editor</button>`;
-	html += '</div>';
-
+    html += '<div class="rpg-lb-form-section">';
+    html += '<div class="rpg-lb-field-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">';
+    html += '<span><i class="fa-solid fa-align-left"></i> Content</span>';
+    html += `<button type="button" class="rpg-lb-btn-popout" data-world="${w}" data-uid="${uid}" style="background: rgba(74, 123, 167, 0.15); border: 1px solid rgba(74, 123, 167, 0.3); color: #ccc; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 0.9em; transition: background 0.2s;"><i class="fa-solid fa-expand"></i> Pop-out Editor</button>`;
+    html += '</div>';
 
     html += `<textarea class="rpg-lb-textarea" data-world="${w}" data-uid="${uid}" data-field="content" rows="${isExpanded ? 10 : 5}">${escapeHtml(entry.content || '')}</textarea>`;
     html += '<div class="rpg-lb-content-footer">';
@@ -544,12 +546,10 @@ html += '<div class="rpg-lb-editor-header">';
 
     html += '</div>';
 
-	// --- AI Revision Section ---
     html += '<div class="rpg-lb-form-section rpg-lb-ai-revision-section">';
     html += '<div class="rpg-lb-section-divider collapsed"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Revision Assistant <i class="fa-solid fa-chevron-down rpg-lb-section-toggle"></i></div>';
     html += '<div class="rpg-lb-collapsible-section" style="display:none; padding-top: 8px;">';
-    
-	// Dropdown Row
+
     html += '<div class="rpg-lb-form-row" style="margin-bottom: 8px;">';
     html += '<div class="rpg-lb-field-group md"><div class="rpg-lb-field-label"><i class="fa-solid fa-tags"></i> Lore Type</div>';
     html += `<select class="rpg-lb-select rpg-lb-type-select" data-world="${w}" data-uid="${uid}">`;
@@ -562,24 +562,21 @@ html += '<div class="rpg-lb-editor-header">';
     html += '<option value="Rules">Rules</option>';
     html += '</select></div>';
 
-	// Locate the Format select element inside buildEditorHtml()
-	html += '<div class="rpg-lb-field-group md"><div class="rpg-lb-field-label"><i class="fa-solid fa-file-code"></i> Format</div>';
-	html += `<select class="rpg-lb-select rpg-lb-format-select" data-world="${w}" data-uid="${uid}">`;
-	html += '<option value="Narrative" selected>Narrative</option>';
-	html += '<option value="Key: Value">Key: Value</option>';
-	html += '<option value="XML Tagged">XML Tagged</option>';
-	html += '<option value="XML Strict Formatting">XML Strict Formatting</option>'; // <-- Add this
-	html += '</select></div>';
+    html += '<div class="rpg-lb-field-group md"><div class="rpg-lb-field-label"><i class="fa-solid fa-file-code"></i> Format</div>';
+    html += `<select class="rpg-lb-select rpg-lb-format-select" data-world="${w}" data-uid="${uid}">`;
+    html += '<option value="Narrative" selected>Narrative</option>';
+    html += '<option value="Key: Value">Key: Value</option>';
+    html += '<option value="XML Tagged">XML Tagged</option>';
+    html += '<option value="XML Strict Formatting">XML Strict Formatting</option>';
+    html += '</select></div>';
 
-    // Prompt Textarea
     html += `<div class="rpg-lb-field-group" style="margin-bottom: 8px;">`;
     html += `<div class="rpg-lb-field-label"><i class="fa-solid fa-comment-dots"></i> Update Lore Prompt</div>`;
-    html += `<textarea class="rpg-lb-textarea rpg-lb-update-prompt" data-world="${w}" data-uid="${uid}" rows="2" placeholder="e.g., Update this entry to reflect that the character lost their left sword in the last fight..."></textarea>`;
+    html += `<textarea class="rpg-lb-textarea rpg-lb-update-prompt" data-world="${w}" data-uid="${uid}" rows="2" placeholder="e.g., Update this entry to reflect recent developments..."></textarea>`;
     html += `</div>`;
 
-	html += `<button type="button" class="rpg-lb-btn-suggest-revision" data-world="${w}" data-uid="${uid}" style="margin-bottom: 8px; width: 100%;"><i class="fa-solid fa-bolt"></i> Suggest Revision</button>`;
+    html += `<button type="button" class="rpg-lb-btn-suggest-revision" data-world="${w}" data-uid="${uid}" style="margin-bottom: 8px; width: 100%;"><i class="fa-solid fa-bolt"></i> Suggest Revision</button>`;
 
-    // Preview Area
     html += `<div class="rpg-lb-field-group">`;
     html += `<div class="rpg-lb-field-label" style="display: flex; justify-content: space-between; align-items: center;">`;
     html += `<span><i class="fa-solid fa-file-pen"></i> Revision Preview (Temporary)</span>`;
@@ -591,7 +588,6 @@ html += '<div class="rpg-lb-editor-header">';
     html += `</div>`;
 
     html += '</div></div>';
-    // ---------------------------
 
     html += '<div class="rpg-lb-editor-actions">';
     html += `<button class="rpg-lb-entry-action-btn rpg-lb-entry-delete" data-world="${w}" data-uid="${uid}" title="Delete"><i class="fa-solid fa-trash"></i> Delete</button>`;
@@ -723,10 +719,9 @@ function refreshCampaignToggles() {
 }
 
 function isMobileView() {
-    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const isSmallScreen = window.matchMedia('(max-width: 1024px)').matches;
     const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-    return (isTouch && isSmallScreen) || isMobileUA;
+    return isSmallScreen || isMobileUA;
 }
 
 function setMobilePanel(panel) {
@@ -763,9 +758,19 @@ export function initLorebookEventDelegation() {
     if (!$modal.length) return;
 
     initMobileLorebookEventDelegation();
-	
-	
-	let popoutState = {
+
+    let resizeDebounceTimer = null;
+    $(window).off('resize.rpgLorebook').on('resize.rpgLorebook', function () {
+        const modal = getLorebookModal();
+        if (modal && modal.isOpen()) {
+            clearTimeout(resizeDebounceTimer);
+            resizeDebounceTimer = setTimeout(() => {
+                renderLorebook();
+            }, 150);
+        }
+    });
+
+    let popoutState = {
         isOpen: false,
         worldName: null,
         uid: null,
@@ -773,7 +778,6 @@ export function initLorebookEventDelegation() {
         $sourceTextarea: null
     };
 
-    // 1. Open the pop-out editor
     $modal.on('click', '.rpg-lb-btn-popout', function(e) {
         e.preventDefault();
         const worldName = $(this).data('world');
@@ -792,19 +796,17 @@ export function initLorebookEventDelegation() {
         $('#rpg-lb-popout-modal').css('display', 'flex');
     });
 
-    // 2. Core close function (handles validation)
     function closePopoutEditor(force = false) {
         if (!popoutState.isOpen) return;
         const currentText = $('#rpg-lb-popout-textarea').val();
 
-        // Check for unsaved changes if not forcing a close
         if (!force && currentText !== popoutState.originalText) {
             const userWantsToSave = confirm("You have unsaved changes in the editor.\n\nClick OK to Save and close.\nClick Cancel to keep the editor open.");
             if (userWantsToSave) {
                 savePopoutEditor();
                 return;
             } else {
-                return; // Abort the close operation entirely
+                return;
             }
         }
 
@@ -812,21 +814,15 @@ export function initLorebookEventDelegation() {
         popoutState.isOpen = false;
     }
 
-    // 3. Save modifications
     function savePopoutEditor() {
         if (!popoutState.isOpen) return;
         
         const newText = $('#rpg-lb-popout-textarea').val();
-        
-        // Push the text back to the original textarea and trigger the 'input' event
-        // This leverages your existing auto-save and token counting logic
         popoutState.$sourceTextarea.val(newText).trigger('input'); 
-        
-        popoutState.originalText = newText; // Re-sync the baseline state
-        closePopoutEditor(true); // Force close since we just saved
+        popoutState.originalText = newText;
+        closePopoutEditor(true);
     }
 
-    // 4. Bind action buttons (Attach to body since modal is injected at root)
     $('body').off('click', '#rpg-lb-popout-save').on('click', '#rpg-lb-popout-save', function() {
         savePopoutEditor();
     });
@@ -846,30 +842,43 @@ export function initLorebookEventDelegation() {
         }
     });
 
-    // 5. Explicitly block background clicking from dismissing the modal
     $('body').off('click', '#rpg-lb-popout-modal').on('click', '#rpg-lb-popout-modal', function(e) {
         if (e.target === this) {
-            // Do nothing. Overrides standard modal background dismissal.
-            // The user MUST click a button to exit.
             e.preventDefault();
             e.stopPropagation();
         }
-    });	
-	
+    });
+
     $modal.on('click', '.rpg-lb-close', function () {
         const modal = getLorebookModal();
         if (modal) modal.close();
     });
 
-    // UPDATED: Modal backdrop click handler
     $modal.on('click', function (e) {
         if (e.target === $modal[0]) {
-            // Prevent close if the lock button has the 'is-locked' class
             if ($modal.find('.rpg-lb-lock').hasClass('is-locked')) {
                 return;
             }
             const modal = getLorebookModal();
             if (modal) modal.close();
+        }
+    });
+
+	// ADDED: Fullscreen button toggle handler (Desktop viewport maximize)
+    // Expands the modal content container to 100vw and 100vh, eliminating all margins and switching icons
+    $modal.on('click', '.rpg-lb-fullscreen', function () {
+        const $btn = $(this);
+        const $icon = $btn.find('i');
+        const $content = $modal.find('.rpg-lb-modal-content');
+        
+        $content.toggleClass('is-fullscreen');
+        
+        if ($content.hasClass('is-fullscreen')) {
+            $icon.removeClass('fa-maximize fa-expand').addClass('fa-minimize fa-compress');
+            $btn.attr('title', 'Restore window size');
+        } else {
+            $icon.removeClass('fa-minimize fa-compress').addClass('fa-maximize fa-expand');
+            $btn.attr('title', 'Toggle fullscreen view');
         }
     });
 
@@ -889,7 +898,7 @@ export function initLorebookEventDelegation() {
         }
     });
 
-	$modal.on('click', '.rpg-lb-btn-suggest-revision', async function (e) {
+    $modal.on('click', '.rpg-lb-btn-suggest-revision', async function (e) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -914,15 +923,12 @@ export function initLorebookEventDelegation() {
         }
 
         const entry = data.entries[uid];
-        
-        // Cache original text for the diff viewer
         $previewBox.data('original-content', entry.content || '');
 
         const originalBtnText = $btn.html();
         $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Generating Revision...');
         $previewBox.val('Thinking with full chat context...');
         
-        // Force textarea view when generating new content
         $editor.find('.rpg-lb-toggle-diff').prop('checked', false).trigger('change');
 
         try {
@@ -1275,12 +1281,15 @@ export function initLorebookEventDelegation() {
         if ($(e.target).closest('.rpg-lb-campaign-toggle, .rpg-lb-campaign-delete, .rpg-lb-icon-picker').length) return;
         const id = $(this).data('campaign');
         if (!id || id === 'unfiled') {
+            campaignManager.toggleCampaignCollapsed('unfiled');
             $(this).toggleClass('collapsed');
+            $(this).find('.rpg-lb-campaign-chevron').toggleClass('rotated');
             $(this).next('.rpg-lb-campaign-body').slideToggle(200);
             return;
         }
         campaignManager.toggleCampaignCollapsed(id);
         $(this).toggleClass('collapsed');
+        $(this).find('.rpg-lb-campaign-chevron').toggleClass('rotated');
         $(this).next('.rpg-lb-campaign-body').slideToggle(200);
     });
 
@@ -1380,53 +1389,18 @@ export function initLorebookEventDelegation() {
         const $row = $modal.find(`.rpg-lb-entry-row[data-world="${CSS.escape(worldName)}"][data-uid="${uid}"] .rpg-lb-entry-row-state`);
         $row.text(isConstant ? '🔵' : isVectorized ? '🔗' : '🟢');
     });
-	
-	$modal.on('change', '.rpg-lb-entry-sort', async function () {
-    currentSortMode = $(this).val();
-    
-    // Save the selection
-    const settings = getSettings();
-    if (!settings.lorebook) settings.lorebook = {};
-    settings.lorebook.lastSortMode = currentSortMode;
-    saveSettings();
 
-    if (selectedBook) {
-        await loadMiddlePanelEntries(selectedBook);
-    }
-	});
-	
-	// Filter middle panel entries by title or keywords
-    $modal.on('input', '.rpg-lb-entry-search', function () {
-        const query = $(this).val().trim().toLowerCase();
-        const $entryList = $modal.find('.rpg-lb-panel-middle .rpg-lb-entry-list');
+    $modal.on('change', '.rpg-lb-entry-sort', async function () {
+        currentSortMode = $(this).val();
         
-        if (!query) {
-            $entryList.find('.rpg-lb-entry-row').show();
-            return;
+        const settings = getSettings();
+        if (!settings.lorebook) settings.lorebook = {};
+        settings.lorebook.lastSortMode = currentSortMode;
+        saveSettings();
+
+        if (selectedBook) {
+            await loadMiddlePanelEntries(selectedBook);
         }
-
-        $entryList.find('.rpg-lb-entry-row').each(function () {
-            const uid = Number($(this).data('uid'));
-            const entryObj = middlePanelEntries.find(e => e.uid === uid)?.entry;
-
-            if (!entryObj) {
-                $(this).hide();
-                return;
-            }
-
-            const title = (entryObj.comment || `Entry ${uid}`).toLowerCase();
-            const primaryKeys = (entryObj.key || []).map(k => String(k).toLowerCase());
-            const secondaryKeys = (entryObj.keysecondary || []).map(k => String(k).toLowerCase());
-
-            const matchTitle = title.includes(query);
-            const matchKeywords = primaryKeys.some(k => k.includes(query)) || secondaryKeys.some(k => k.includes(query));
-
-            if (matchTitle || matchKeywords) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
     });
 
     $modal.on('click', '.rpg-lb-fpill', function () {
@@ -1445,8 +1419,6 @@ export function initLorebookEventDelegation() {
         }
     });
 
-
-	// Left-panel Lorebook / Campaign search
     $modal.on('input', '.rpg-lb-panel-left .rpg-lb-search', function () {
         const query = $(this).val().trim().toLowerCase();
         campaignManager.setLastSearch(query);
@@ -1461,7 +1433,6 @@ export function initLorebookEventDelegation() {
         if (query) applySearchFilter(leftPanel, query);
     });
 
-    // Middle-panel Lorebook Entry search (Keyword or Title match)
     $modal.on('input', '.rpg-lb-entry-search-input', function () {
         const query = $(this).val().trim().toLowerCase();
         const $entryList = $modal.find('.rpg-lb-panel-middle .rpg-lb-entry-list');
@@ -1527,13 +1498,12 @@ export function initLorebookEventDelegation() {
         updateRightPanel();
     });
 
-$modal.on('click', '.rpg-lb-spine-delete', async function (e) {
+    $modal.on('click', '.rpg-lb-spine-delete', async function (e) {
         e.stopPropagation();
         const worldName = $(this).data('world');
         if (!worldName) return;
 
         try {
-            // Load world data to check if entries exist
             const data = await lorebookAPI.loadWorldData(worldName, true);
             const entryCount = lorebookAPI.getEntryCount(data);
             
@@ -1560,26 +1530,27 @@ $modal.on('click', '.rpg-lb-spine-delete', async function (e) {
         }
     });
 
-$modal.off('click', '.rpg-lb-btn-add-entry').on('click', '.rpg-lb-btn-add-entry', async function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const worldName = $(this).data('world');
-    const data = await lorebookAPI.loadWorldData(worldName);
-    if (!data) return;
+    $modal.off('click', '.rpg-lb-btn-add-entry').on('click', '.rpg-lb-btn-add-entry', async function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const worldName = $(this).data('world');
+        const data = await lorebookAPI.loadWorldData(worldName);
+        if (!data) return;
 
-    const newEntry = lorebookAPI.createEntry(worldName, data);
-    if (!newEntry) return;
+        const newEntry = lorebookAPI.createEntry(worldName, data);
+        if (!newEntry) return;
 
-    await lorebookAPI.saveWorldData(worldName, data);
-    
-    const $entries = $(this).closest('.rpg-lb-lore-entries');
-    if ($entries.length) {
-        await renderEntriesForBook(worldName, $entries[0], data);
-    } else {
-        await loadMiddlePanelEntries(worldName);
-    }
-});
+        await lorebookAPI.saveWorldData(worldName, data);
+        
+        const $entries = $(this).closest('.rpg-lb-lore-entries');
+        if ($entries.length) {
+            await renderEntriesForBook(worldName, $entries[0], data);
+        } else {
+            await loadMiddlePanelEntries(worldName);
+        }
+    });
+
     $modal.on('click', '.rpg-lb-btn-new-book', async function () {
         const name = prompt('Enter a name for the new lorebook:');
         if (name && name.trim()) {
@@ -1643,10 +1614,13 @@ $modal.off('click', '.rpg-lb-btn-add-entry').on('click', '.rpg-lb-btn-add-entry'
         }
     });
 
-    $modal.on('click', '.rpg-lb-section-divider', function (e) {
+
+	$modal.off('click', '.rpg-lb-section-divider').on('click', '.rpg-lb-section-divider', function (e) {
+        e.preventDefault();
         e.stopPropagation();
         $(this).toggleClass('collapsed');
-        $(this).next('.rpg-lb-collapsible-section').slideToggle(200);
+        $(this).find('.rpg-lb-section-toggle').toggleClass('rotated');
+        $(this).next('.rpg-lb-collapsible-section').stop(true, true).slideToggle(200);
     });
 
     $modal.on('change', '[data-global]', function () {
@@ -1657,9 +1631,11 @@ $modal.off('click', '.rpg-lb-btn-add-entry').on('click', '.rpg-lb-btn-add-entry'
         lorebookAPI.setGlobalWISetting(key, value);
     });
 
-    $modal.on('click', '.rpg-lb-global-settings-header', function () {
+    $modal.off('click', '.rpg-lb-global-settings-header').on('click', '.rpg-lb-global-settings-header', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         $(this).find('.rpg-lb-global-chevron').toggleClass('rotated');
-        $(this).next('.rpg-lb-global-settings-body').slideToggle(200);
+        $(this).next('.rpg-lb-global-settings-body').stop(true, true).slideToggle(200);
     });
 
     $modal.on('click', '.rpg-lb-campaign-icon[data-campaign]', function (e) {
@@ -1811,18 +1787,11 @@ function parseFieldValue(field, rawValue, $el) {
     return rawValue;
 }
 
-/**
- * Generates an HTML diff between two strings.
- * @param {string} oldStr - The original content
- * @param {string} newStr - The revised content
- * @returns {string} Formatted HTML with <ins> and <del> styles
- */
 function generateDiffHtml(oldStr, newStr) {
     const escape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const o = oldStr.split(/(\s+)/);
     const n = newStr.split(/(\s+)/);
     
-    // Build LCS matrix
     const matrix = Array(o.length + 1).fill(null).map(() => Array(n.length + 1).fill(0));
     for (let i = 1; i <= o.length; i++) {
         for (let j = 1; j <= n.length; j++) {
@@ -1834,7 +1803,6 @@ function generateDiffHtml(oldStr, newStr) {
         }
     }
 
-    // Backtrack to find differences
     let i = o.length, j = n.length;
     const diff = [];
     while (i > 0 || j > 0) {
@@ -1850,12 +1818,9 @@ function generateDiffHtml(oldStr, newStr) {
         }
     }
 
-    // Render HTML
     return diff.map(part => {
         if (part.type === 'add') return `<span style="background: rgba(0, 255, 0, 0.2); color: #8f8;">${escape(part.val)}</span>`;
         if (part.type === 'del') return `<span style="background: rgba(255, 0, 0, 0.2); color: #f88; text-decoration: line-through;">${escape(part.val)}</span>`;
         return escape(part.val);
     }).join('').replace(/\n/g, '<br>');
 }
-
-

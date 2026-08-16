@@ -23,7 +23,7 @@ export class LorebookModal {
         this._isOpen = false;
     }
 
-open() {
+	open() {
         if (this.isAnimating || !this.modal) return;
 
         const settings = getSettings();
@@ -34,7 +34,7 @@ open() {
             this._applyCustomTheme();
         }
 
-        // Brute-force inline styles to bypass CSS cache/loading issues
+        // Brute-force inline styles to bypass CSS cache/loading issues and guarantee visibility
         this.modal.style.display = 'flex';
         this.modal.style.zIndex = '199999';
 
@@ -50,7 +50,7 @@ open() {
         resetLorebookViewState();
         renderLorebook();
     }
-
+	
     close() {
         if (this.isAnimating || !this.modal) return;
 

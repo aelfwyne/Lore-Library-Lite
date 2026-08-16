@@ -17,6 +17,10 @@ Warning: This code is heavily altered from the original project as it was not wr
 ![Preview Image](preview.png)
 
 ## Changes
+* **Update 3.1 Bug Fix Update**
+  * Attention paid to Mobile Rendering - should now be usable on tablet and phone sized screens. This was previously borked.
+  * Full Screen toggle added for desktop screens to use ALL viewport space.
+  * Hover tooltip added to clarify that toggles on the left panel are Global activation, not per chat or per character.
 * **Feature Update 3 and Bug Fix Update**
   * Refined AI Assisted Revisions - System Prompt is now bypassed to prevent prompt collision. This should stop the AI from trying to RP/Storytell when revising lore cards.
   * Strict XML Option added to revise formats. Instructs the AI to use the hardcoded template. Currently only the NPC template has been refined, others are placeholders. Future updates may include user editing of templates.
