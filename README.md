@@ -17,6 +17,11 @@ Warning: This code is heavily altered from the original project as it was not wr
 ![Preview Image](preview.png)
 
 ## Changes
+* **Feature Update 3 and Bug Fix Update**
+  * Refined AI Assisted Revisions - System Prompt is now bypassed to prevent prompt collision. This should stop the AI from trying to RP/Storytell when revising lore cards.
+  * Strict XML Option added to revise formats. Instructs the AI to use the hardcoded template. Currently only the NPC template has been refined, others are placeholders. Future updates may include user editing of templates.
+  * Search bar added to filter Library entries. Triggers on KEYWORD and TITLE matches.
+  * Lore entry screen organized to be more space efficient.
 * **Feature Update 2**
   * AI Assisted Revisions - you can now have the AI suggest changes to a lore entry. Your current context will be sent to the LLM with specific instructions for update based on your selections. You can mark diffs to see what's changed. No changes are made automatically - you will copy and paste the revision into the main entry if you're satisfied with it. Presets for multiple different types of lore with choice of output as Narrative, Key:Value, or XML Tagged.
   * Lock Icon added to prevent accidental loss of focus if your mouse tracks outside the window - top right of title bar.
