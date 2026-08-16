@@ -73,7 +73,8 @@ export function resetLorebookViewState() {
     selectedBook = null;
     selectedEntry = null;
     expandedEditor = false;
-    currentSortMode = 'order';
+	// Pull the saved state, default to 'order' if none exists
+    currentSortMode = getSettings().lorebook?.lastSortMode || 'order';
 }
 
 export function setSelectedBookAndEntry(bookName, uid) {
@@ -256,6 +257,7 @@ function buildTreeBookHtml(worldName, activeNames, filter) {
     return html;
 }
 
+
 function renderMiddlePanel() {
     let html = '<section class="rpg-lb-panel-middle">';
 
@@ -277,17 +279,22 @@ function renderMiddlePanel() {
     html += `<button class="rpg-lb-spine-delete" data-world="${w}" title="Delete"><i class="fa-solid fa-trash"></i></button>`;
     html += '</div></div>';
 
-if (!isBookActive) {
+    if (!isBookActive) {
         html += '<div class="rpg-lb-inactive-banner"><i class="fa-solid fa-eye-slash"></i> Book is deactivated — entries won\'t be scanned</div>';
     }
 
-html += '<div class="rpg-lb-panel-toolbar">';
-    html += '<select class="rpg-lb-entry-sort" title="Sort entries">';
+    // Separate entry search input next to the sorting dropdown
+    html += '<div class="rpg-lb-panel-toolbar" style="display: flex; gap: 8px; align-items: center;">';
+    html += '<select class="rpg-lb-entry-sort" title="Sort entries" style="flex: 1;">';
     html += `<option value="order" ${currentSortMode === 'order' ? 'selected' : ''}>By Order</option>`;
     html += `<option value="title" ${currentSortMode === 'title' ? 'selected' : ''}>By Title</option>`;
     html += `<option value="tokens" ${currentSortMode === 'tokens' ? 'selected' : ''}>By Tokens</option>`;
     html += `<option value="status" ${currentSortMode === 'status' ? 'selected' : ''}>By Status</option>`;
     html += '</select>';
+    html += '<div class="rpg-lb-search-wrap" style="flex: 1; position: relative;">';
+    html += '<i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.75em; color: #888;"></i>';
+    html += '<input type="text" class="rpg-lb-entry-search-input" placeholder="Filter entries..." style="width: 100%; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(74, 123, 167, 0.15); color: #ccc; border-radius: 6px; padding: 5px 8px 5px 26px; font-size: 0.78em; outline: none;">';
+    html += '</div>';
     html += '</div>';
 
     html += `<div class="rpg-lb-entry-list ${!isBookActive ? 'book-inactive' : ''}" data-world="${w}">`;
@@ -416,7 +423,7 @@ function buildEditorHtml(worldName, uid, entry, isExpanded) {
 
     let html = '<div class="rpg-lb-editor" data-world="' + w + '" data-uid="' + uid + '">';
 
-    html += '<div class="rpg-lb-editor-header">';
+html += '<div class="rpg-lb-editor-header">';
     html += `<span class="rpg-lb-editor-title"><i class="fa-solid fa-scroll"></i> ${escapeHtml(entry.comment || `Entry ${uid}`)}</span>`;
     if (!isExpanded) {
         html += '<button class="rpg-lb-expand-btn" title="Expand to full width"><i class="fa-solid fa-expand"></i></button>';
@@ -424,21 +431,22 @@ function buildEditorHtml(worldName, uid, entry, isExpanded) {
     }
     html += '</div>';
 
-    html += '<div class="rpg-lb-editor-status">';
-    html += `<select class="rpg-lb-state-select" data-world="${w}" data-uid="${uid}" data-field="entryState" title="Entry Status">`;
+    // 1. Name / Title row
+    html += '<div class="rpg-lb-form-section"><div class="rpg-lb-form-row">';
+    html += `<div class="rpg-lb-field-group"><div class="rpg-lb-field-label"><i class="fa-solid fa-tag"></i> Title / Memo</div><input class="rpg-lb-input" type="text" value="${escapeHtml(entry.comment || '')}" data-world="${w}" data-uid="${uid}" data-field="comment"></div>`;
+    html += '</div></div>';
+
+    // 2. Status, UID, Position, and Depth on the same row below name
+    const posVal = entry.position ?? 0;
+    const roleVal = entry.role ?? 0;
+    html += '<div class="rpg-lb-form-section"><div class="rpg-lb-form-row">';
+    html += `<div class="rpg-lb-field-group sm"><div class="rpg-lb-field-label"><i class="fa-solid fa-circle-dot"></i> Status</div>`;
+    html += `<select class="rpg-lb-select rpg-lb-state-select" data-world="${w}" data-uid="${uid}" data-field="entryState" title="Entry Status">`;
     html += `<option value="normal" ${!entry.constant && !entry.vectorized ? 'selected' : ''}>🟢 Normal</option>`;
     html += `<option value="constant" ${entry.constant ? 'selected' : ''}>🔵 Constant</option>`;
     html += `<option value="vectorized" ${entry.vectorized ? 'selected' : ''}>🔗 Vectorized</option>`;
     html += `</select></div>`;
-
-    html += '<div class="rpg-lb-form-section"><div class="rpg-lb-form-row">';
-    html += `<div class="rpg-lb-field-group"><div class="rpg-lb-field-label"><i class="fa-solid fa-tag"></i> Title / Memo</div><input class="rpg-lb-input" type="text" value="${escapeHtml(entry.comment || '')}" data-world="${w}" data-uid="${uid}" data-field="comment"></div>`;
     html += `<div class="rpg-lb-field-group sm"><div class="rpg-lb-field-label"><i class="fa-solid fa-fingerprint"></i> UID</div><input class="rpg-lb-input" type="text" value="${uid}" disabled style="opacity:0.5;text-align:center;"></div>`;
-    html += '</div></div>';
-
-    const posVal = entry.position ?? 0;
-    const roleVal = entry.role ?? 0;
-    html += '<div class="rpg-lb-form-section"><div class="rpg-lb-form-row">';
     html += `<div class="rpg-lb-field-group md"><div class="rpg-lb-field-label"><i class="fa-solid fa-location-dot"></i> Position</div>`;
     html += `<select class="rpg-lb-select rpg-lb-position-select" data-world="${w}" data-uid="${uid}" data-field="position">`;
     html += `<option value="0" data-role="" ${posVal == 0 ? 'selected' : ''}>↑Char — Before Char Defs</option>`;
@@ -460,20 +468,34 @@ function buildEditorHtml(worldName, uid, entry, isExpanded) {
     html += `<input class="rpg-lb-input" type="text" value="${escapeHtml(entry.outletName || '')}" data-world="${w}" data-uid="${uid}" data-field="outletName" placeholder="Outlet Name"></div>`;
     html += '</div></div>';
 
-    html += '<div class="rpg-lb-keywords-card">';
+    // 3. Keywords row: Primary, Booleans/Logic in between, Secondary
+    html += '<div class="rpg-lb-keywords-card compact-row">';
     html += '<div class="rpg-lb-kw-section"><div class="rpg-lb-kw-section-header"><div class="rpg-lb-field-label"><i class="fa-solid fa-key"></i> Primary Keywords</div></div>';
     html += `<textarea class="rpg-lb-input rpg-lb-kw-textarea" data-world="${w}" data-uid="${uid}" data-field="key" rows="2" placeholder="Comma-separated keywords">${(entry.key || []).join(', ')}</textarea></div>`;
-    html += '<div class="rpg-lb-kw-section"><div class="rpg-lb-kw-section-header"><div class="rpg-lb-field-label"><i class="fa-solid fa-key"></i> Secondary Keywords</div>';
+
+    html += '<div class="rpg-lb-kw-booleans">';
+    html += `<div class="rpg-lb-field-label"><i class="fa-solid fa-code-branch"></i> Logic</div>`;
     html += `<select class="rpg-lb-kw-logic-select" data-world="${w}" data-uid="${uid}" data-field="selectiveLogic">`;
     html += `<option value="0" ${entry.selectiveLogic == 0 ? 'selected' : ''}>AND ANY</option>`;
     html += `<option value="1" ${entry.selectiveLogic == 1 ? 'selected' : ''}>AND ALL</option>`;
     html += `<option value="2" ${entry.selectiveLogic == 2 ? 'selected' : ''}>NOT ALL</option>`;
     html += `<option value="3" ${entry.selectiveLogic == 3 ? 'selected' : ''}>NOT ANY</option>`;
-    html += '</select></div>';
-    html += `<textarea class="rpg-lb-input rpg-lb-kw-textarea secondary" data-world="${w}" data-uid="${uid}" data-field="keysecondary" rows="2" placeholder="Comma-separated secondary keywords">${(entry.keysecondary || []).join(', ')}</textarea></div>`;
+    html += '</select>';
+    html += `<label class="rpg-lb-wi-checkbox" style="margin-top: 6px;"><input type="checkbox" ${entry.selective ? 'checked' : ''} data-world="${w}" data-uid="${uid}" data-field="selective"><span class="rpg-lb-check-box"><i class="fa-solid fa-check"></i></span> Selective</label>`;
     html += '</div>';
 
-    html += '<div class="rpg-lb-form-section"><div class="rpg-lb-field-label"><i class="fa-solid fa-align-left"></i> Content</div>';
+    html += '<div class="rpg-lb-kw-section"><div class="rpg-lb-kw-section-header"><div class="rpg-lb-field-label"><i class="fa-solid fa-key"></i> Secondary Keywords</div></div>';
+    html += `<textarea class="rpg-lb-input rpg-lb-kw-textarea secondary" data-world="${w}" data-uid="${uid}" data-field="keysecondary" rows="2" placeholder="Comma-separated secondary keywords">${(entry.keysecondary || []).join(', ')}</textarea></div>`;
+    html += '</div>';
+	
+
+	html += '<div class="rpg-lb-form-section">';
+	html += '<div class="rpg-lb-field-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">';
+	html += '<span><i class="fa-solid fa-align-left"></i> Content</span>';
+	html += `<button type="button" class="rpg-lb-btn-popout" data-world="${w}" data-uid="${uid}" style="background: rgba(74, 123, 167, 0.15); border: 1px solid rgba(74, 123, 167, 0.3); color: #ccc; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 0.9em; transition: background 0.2s;"><i class="fa-solid fa-expand"></i> Pop-out Editor</button>`;
+	html += '</div>';
+
+
     html += `<textarea class="rpg-lb-textarea" data-world="${w}" data-uid="${uid}" data-field="content" rows="${isExpanded ? 10 : 5}">${escapeHtml(entry.content || '')}</textarea>`;
     html += '<div class="rpg-lb-content-footer">';
     html += `<span class="rpg-lb-token-count"><i class="fa-solid fa-coins"></i> ~${tokEst} tokens</span>`;
@@ -540,13 +562,14 @@ function buildEditorHtml(worldName, uid, entry, isExpanded) {
     html += '<option value="Rules">Rules</option>';
     html += '</select></div>';
 
-    html += '<div class="rpg-lb-field-group md"><div class="rpg-lb-field-label"><i class="fa-solid fa-file-code"></i> Format</div>';
-    html += `<select class="rpg-lb-select rpg-lb-format-select" data-world="${w}" data-uid="${uid}">`;
-    html += '<option value="Narrative" selected>Narrative</option>';
-    html += '<option value="Key: Value">Key: Value</option>';
-    html += '<option value="XML Tagged">XML Tagged</option>';
-    html += '</select></div>';
-    html += '</div>';
+	// Locate the Format select element inside buildEditorHtml()
+	html += '<div class="rpg-lb-field-group md"><div class="rpg-lb-field-label"><i class="fa-solid fa-file-code"></i> Format</div>';
+	html += `<select class="rpg-lb-select rpg-lb-format-select" data-world="${w}" data-uid="${uid}">`;
+	html += '<option value="Narrative" selected>Narrative</option>';
+	html += '<option value="Key: Value">Key: Value</option>';
+	html += '<option value="XML Tagged">XML Tagged</option>';
+	html += '<option value="XML Strict Formatting">XML Strict Formatting</option>'; // <-- Add this
+	html += '</select></div>';
 
     // Prompt Textarea
     html += `<div class="rpg-lb-field-group" style="margin-bottom: 8px;">`;
@@ -740,7 +763,99 @@ export function initLorebookEventDelegation() {
     if (!$modal.length) return;
 
     initMobileLorebookEventDelegation();
+	
+	
+	let popoutState = {
+        isOpen: false,
+        worldName: null,
+        uid: null,
+        originalText: '',
+        $sourceTextarea: null
+    };
 
+    // 1. Open the pop-out editor
+    $modal.on('click', '.rpg-lb-btn-popout', function(e) {
+        e.preventDefault();
+        const worldName = $(this).data('world');
+        const uid = $(this).data('uid');
+        const $sourceTextarea = $(this).closest('.rpg-lb-form-section').find('textarea[data-field="content"]');
+
+        popoutState = {
+            isOpen: true,
+            worldName,
+            uid,
+            originalText: $sourceTextarea.val(),
+            $sourceTextarea
+        };
+
+        $('#rpg-lb-popout-textarea').val(popoutState.originalText);
+        $('#rpg-lb-popout-modal').css('display', 'flex');
+    });
+
+    // 2. Core close function (handles validation)
+    function closePopoutEditor(force = false) {
+        if (!popoutState.isOpen) return;
+        const currentText = $('#rpg-lb-popout-textarea').val();
+
+        // Check for unsaved changes if not forcing a close
+        if (!force && currentText !== popoutState.originalText) {
+            const userWantsToSave = confirm("You have unsaved changes in the editor.\n\nClick OK to Save and close.\nClick Cancel to keep the editor open.");
+            if (userWantsToSave) {
+                savePopoutEditor();
+                return;
+            } else {
+                return; // Abort the close operation entirely
+            }
+        }
+
+        $('#rpg-lb-popout-modal').css('display', 'none');
+        popoutState.isOpen = false;
+    }
+
+    // 3. Save modifications
+    function savePopoutEditor() {
+        if (!popoutState.isOpen) return;
+        
+        const newText = $('#rpg-lb-popout-textarea').val();
+        
+        // Push the text back to the original textarea and trigger the 'input' event
+        // This leverages your existing auto-save and token counting logic
+        popoutState.$sourceTextarea.val(newText).trigger('input'); 
+        
+        popoutState.originalText = newText; // Re-sync the baseline state
+        closePopoutEditor(true); // Force close since we just saved
+    }
+
+    // 4. Bind action buttons (Attach to body since modal is injected at root)
+    $('body').off('click', '#rpg-lb-popout-save').on('click', '#rpg-lb-popout-save', function() {
+        savePopoutEditor();
+    });
+
+    $('body').off('click', '#rpg-lb-popout-close').on('click', '#rpg-lb-popout-close', function() {
+        closePopoutEditor();
+    });
+
+    $('body').off('click', '#rpg-lb-popout-discard').on('click', '#rpg-lb-popout-discard', function() {
+        const currentText = $('#rpg-lb-popout-textarea').val();
+        if (currentText !== popoutState.originalText) {
+            if (confirm("Are you sure you want to discard your changes?")) {
+                closePopoutEditor(true);
+            }
+        } else {
+            closePopoutEditor(true);
+        }
+    });
+
+    // 5. Explicitly block background clicking from dismissing the modal
+    $('body').off('click', '#rpg-lb-popout-modal').on('click', '#rpg-lb-popout-modal', function(e) {
+        if (e.target === this) {
+            // Do nothing. Overrides standard modal background dismissal.
+            // The user MUST click a button to exit.
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });	
+	
     $modal.on('click', '.rpg-lb-close', function () {
         const modal = getLorebookModal();
         if (modal) modal.close();
@@ -774,7 +889,7 @@ export function initLorebookEventDelegation() {
         }
     });
 
-$modal.on('click', '.rpg-lb-btn-suggest-revision', async function (e) {
+	$modal.on('click', '.rpg-lb-btn-suggest-revision', async function (e) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -1267,11 +1382,54 @@ $modal.on('click', '.rpg-lb-btn-suggest-revision', async function (e) {
     });
 	
 	$modal.on('change', '.rpg-lb-entry-sort', async function () {
-        currentSortMode = $(this).val();
-        if (selectedBook) {
-            await loadMiddlePanelEntries(selectedBook);
+    currentSortMode = $(this).val();
+    
+    // Save the selection
+    const settings = getSettings();
+    if (!settings.lorebook) settings.lorebook = {};
+    settings.lorebook.lastSortMode = currentSortMode;
+    saveSettings();
+
+    if (selectedBook) {
+        await loadMiddlePanelEntries(selectedBook);
+    }
+	});
+	
+	// Filter middle panel entries by title or keywords
+    $modal.on('input', '.rpg-lb-entry-search', function () {
+        const query = $(this).val().trim().toLowerCase();
+        const $entryList = $modal.find('.rpg-lb-panel-middle .rpg-lb-entry-list');
+        
+        if (!query) {
+            $entryList.find('.rpg-lb-entry-row').show();
+            return;
         }
+
+        $entryList.find('.rpg-lb-entry-row').each(function () {
+            const uid = Number($(this).data('uid'));
+            const entryObj = middlePanelEntries.find(e => e.uid === uid)?.entry;
+
+            if (!entryObj) {
+                $(this).hide();
+                return;
+            }
+
+            const title = (entryObj.comment || `Entry ${uid}`).toLowerCase();
+            const primaryKeys = (entryObj.key || []).map(k => String(k).toLowerCase());
+            const secondaryKeys = (entryObj.keysecondary || []).map(k => String(k).toLowerCase());
+
+            const matchTitle = title.includes(query);
+            const matchKeywords = primaryKeys.some(k => k.includes(query)) || secondaryKeys.some(k => k.includes(query));
+
+            if (matchTitle || matchKeywords) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
     });
+	
+	
 
     $modal.on('click', '.rpg-lb-fpill', function () {
         const filter = $(this).data('filter');
@@ -1289,7 +1447,9 @@ $modal.on('click', '.rpg-lb-btn-suggest-revision', async function (e) {
         }
     });
 
-    $modal.on('input', '.rpg-lb-search', function () {
+
+	// Left-panel Lorebook / Campaign search
+    $modal.on('input', '.rpg-lb-panel-left .rpg-lb-search', function () {
         const query = $(this).val().trim().toLowerCase();
         campaignManager.setLastSearch(query);
         clearTimeout(searchDebounceTimer);
@@ -1301,6 +1461,40 @@ $modal.on('click', '.rpg-lb-btn-suggest-revision', async function (e) {
         const lb = getSettings().lorebook || {};
         applyStatusFilter(leftPanel, lb.lastFilter || 'all');
         if (query) applySearchFilter(leftPanel, query);
+    });
+
+    // Middle-panel Lorebook Entry search (Keyword or Title match)
+    $modal.on('input', '.rpg-lb-entry-search-input', function () {
+        const query = $(this).val().trim().toLowerCase();
+        const $entryList = $modal.find('.rpg-lb-panel-middle .rpg-lb-entry-list');
+
+        if (!query) {
+            $entryList.find('.rpg-lb-entry-row').show();
+            return;
+        }
+
+        $entryList.find('.rpg-lb-entry-row').each(function () {
+            const uid = Number($(this).data('uid'));
+            const entryObj = middlePanelEntries.find(e => e.uid === uid)?.entry;
+
+            if (!entryObj) {
+                $(this).hide();
+                return;
+            }
+
+            const title = (entryObj.comment || `Entry ${uid}`).toLowerCase();
+            const primaryKeys = (entryObj.key || []).map(k => String(k).toLowerCase());
+            const secondaryKeys = (entryObj.keysecondary || []).map(k => String(k).toLowerCase());
+
+            const matchTitle = title.includes(query);
+            const matchKeywords = primaryKeys.some(k => k.includes(query)) || secondaryKeys.some(k => k.includes(query));
+
+            if (matchTitle || matchKeywords) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
     });
 
     $modal.on('click', '.rpg-lb-tab-add', function () {

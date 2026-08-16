@@ -56,25 +56,41 @@ function injectModalHTML() {
     console.warn("[Lore Library] Injecting Modal HTML into DOM.");
     const modalHTML = `
     <div id="rpg-lorebook-modal" class="rpg-lb-modal" style="display: none;">
+        <!-- Existing modal content remains untouched -->
         <div class="rpg-lb-modal-content">
             <div class="rpg-lb-modal-header">
                 <h3><i class="fa-solid fa-book-bookmark"></i> Lore Library</h3>
                 <div class="rpg-lb-spacer"></div>
                 <div class="rpg-lb-toggle" data-type="master" title="Toggle all lorebooks globally"></div>
-                <!-- ADDED: Lock Button -->
                 <button type="button" class="rpg-lb-lock" title="Lock modal (prevent accidental close)"><i class="fa-solid fa-lock-open"></i></button>
                 <button type="button" class="rpg-lb-close" id="rpg-lorebook-close">&times;</button>
             </div>
-            <div class="rpg-lb-modal-body">
-                <!-- Rendered dynamically by lorebookRender.js -->
+            <div class="rpg-lb-modal-body"></div>
+            <div class="rpg-lb-modal-footer"></div>
+        </div>
+    </div>`;
+
+    // NEW: Inject the pop-out modal template
+    const popoutHTML = `
+    <div id="rpg-lb-popout-modal" class="rpg-lb-modal" style="display: none; z-index: 200005;">
+        <div class="rpg-lb-modal-content" style="width: 85vw; max-width: 1400px; height: 85vh; max-height: 1000px;">
+            <div class="rpg-lb-modal-header">
+                <h3><i class="fa-solid fa-up-right-from-square"></i> Expanded Editor</h3>
+                <div class="rpg-lb-spacer"></div>
+                <button type="button" class="rpg-lb-close" id="rpg-lb-popout-close" title="Close window">&times;</button>
             </div>
-            <div class="rpg-lb-modal-footer">
-                <!-- Rendered dynamically by lorebookRender.js -->
+            <div class="rpg-lb-modal-body" style="padding: 16px; display: flex; flex-direction: column; flex: 1;">
+                <textarea id="rpg-lb-popout-textarea" class="rpg-lb-textarea" style="flex: 1; resize: none; font-size: 1.05em; padding: 16px; line-height: 1.5; font-family: monospace;"></textarea>
+            </div>
+            <div class="rpg-lb-modal-footer" style="justify-content: flex-end; gap: 12px; padding: 12px 16px;">
+                <button id="rpg-lb-popout-discard" class="rpg-lb-btn-import" style="width: auto;"><i class="fa-solid fa-trash-can"></i> Discard Changes</button>
+                <button id="rpg-lb-popout-save" class="rpg-lb-btn-new-book" style="width: auto; background: rgba(46, 204, 113, 0.2); border-color: #2ecc71; color: #fff;"><i class="fa-solid fa-floppy-disk"></i> Save & Close</button>
             </div>
         </div>
     </div>`;
 
     $('body').append(modalHTML);
+    $('body').append(popoutHTML);
 }
 
 function interceptNativeWIButton() {

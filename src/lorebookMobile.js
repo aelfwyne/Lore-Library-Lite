@@ -114,49 +114,77 @@ function buildEntryHtml(worldName, uid, entry) {
     header += `<button class="rpg-lb-entry-action-btn rpg-lb-entry-delete" data-world="${w}" data-uid="${uid}" title="Delete"><i class="fa-solid fa-trash"></i></button>`;
     header += `</div></div>`;
 
-    let body = `<div class="rpg-lb-entry-body">`;
-    body += `<div class="rpg-lb-form-section"><div class="rpg-lb-form-row">`;
-    body += `<div class="rpg-lb-field-group"><div class="rpg-lb-field-label"><i class="fa-solid fa-tag"></i> Title / Memo</div><input class="rpg-lb-input" type="text" value="${escapeHtml(entry.comment || '')}" data-world="${w}" data-uid="${uid}" data-field="comment"></div>`;
-    body += `<div class="rpg-lb-field-group sm"><div class="rpg-lb-field-label"><i class="fa-solid fa-fingerprint"></i> UID</div><input class="rpg-lb-input" type="text" value="${uid}" disabled style="opacity:0.5;text-align:center;"></div>`;
-    body += `</div></div>`;
+html += '<div class="rpg-lb-editor-header">';
+    html += `<span class="rpg-lb-editor-title"><i class="fa-solid fa-scroll"></i> ${escapeHtml(entry.comment || `Entry ${uid}`)}</span>`;
+    if (!isExpanded) {
+        html += '<button class="rpg-lb-expand-btn" title="Expand to full width"><i class="fa-solid fa-expand"></i></button>';
+        html += '<button class="rpg-lb-close-editor-btn" title="Close editor"><i class="fa-solid fa-xmark"></i></button>';
+    }
+    html += '</div>';
 
+    // 1. Name / Title row
+    html += '<div class="rpg-lb-form-section"><div class="rpg-lb-form-row">';
+    html += `<div class="rpg-lb-field-group"><div class="rpg-lb-field-label"><i class="fa-solid fa-tag"></i> Title / Memo</div><input class="rpg-lb-input" type="text" value="${escapeHtml(entry.comment || '')}" data-world="${w}" data-uid="${uid}" data-field="comment"></div>`;
+    html += '</div></div>';
+
+    // 2. Status, UID, Position, and Depth on the same row below name
     const posVal = entry.position ?? 0;
     const roleVal = entry.role ?? 0;
-    body += `<div class="rpg-lb-form-section"><div class="rpg-lb-form-row">`;
-    body += `<div class="rpg-lb-field-group md"><div class="rpg-lb-field-label"><i class="fa-solid fa-location-dot"></i> Position</div>`;
-    body += `<select class="rpg-lb-select rpg-lb-position-select" data-world="${w}" data-uid="${uid}" data-field="position">`;
-    body += `<option value="0" data-role="" ${posVal == 0 ? 'selected' : ''}>&#8593;Char &#8212; Before Char Defs</option>`;
-    body += `<option value="1" data-role="" ${posVal == 1 ? 'selected' : ''}>&#8595;Char &#8212; After Char Defs</option>`;
-    body += `<option value="2" data-role="" ${posVal == 2 ? 'selected' : ''}>&#8593;AN &#8212; Before Author's Note</option>`;
-    body += `<option value="3" data-role="" ${posVal == 3 ? 'selected' : ''}>&#8595;AN &#8212; After Author's Note</option>`;
-    body += `<option value="4" data-role="0" ${posVal == 4 && roleVal == 0 ? 'selected' : ''}>@D &#9881;&#65039; &#8212; At Depth (System)</option>`;
-    body += `<option value="4" data-role="1" ${posVal == 4 && roleVal == 1 ? 'selected' : ''}>@D &#128100; &#8212; At Depth (User)</option>`;
-    body += `<option value="4" data-role="2" ${posVal == 4 && roleVal == 2 ? 'selected' : ''}>@D &#129302; &#8212; At Depth (Assistant)</option>`;
-    body += `<option value="5" data-role="" ${posVal == 5 ? 'selected' : ''}>&#8593;EM &#8212; Before Examples</option>`;
-    body += `<option value="6" data-role="" ${posVal == 6 ? 'selected' : ''}>&#8595;EM &#8212; After Examples</option>`;
-    body += `<option value="7" data-role="" ${posVal == 7 ? 'selected' : ''}>&#10145;&#65039; Outlet</option>`;
-    body += `</select></div>`;
-    body += `<div class="rpg-lb-field-group sm"><div class="rpg-lb-field-label"><i class="fa-solid fa-layer-group"></i> Depth</div><input class="rpg-lb-input rpg-lb-number" type="number" value="${entry.depth ?? 4}" data-world="${w}" data-uid="${uid}" data-field="depth"></div>`;
-    body += `</div>`;
-    body += `<div class="rpg-lb-form-row rpg-lb-outlet-row" ${posVal != 7 ? 'style="display:none;"' : ''}>`;
-    body += `<div class="rpg-lb-field-group"><div class="rpg-lb-field-label"><i class="fa-solid fa-plug"></i> Outlet Name</div>`;
-    body += `<input class="rpg-lb-input" type="text" value="${escapeHtml(entry.outletName || '')}" data-world="${w}" data-uid="${uid}" data-field="outletName" placeholder="Outlet Name"></div>`;
-    body += `</div></div>`;
+    html += '<div class="rpg-lb-form-section"><div class="rpg-lb-form-row">';
+    html += `<div class="rpg-lb-field-group sm"><div class="rpg-lb-field-label"><i class="fa-solid fa-circle-dot"></i> Status</div>`;
+    html += `<select class="rpg-lb-select rpg-lb-state-select" data-world="${w}" data-uid="${uid}" data-field="entryState" title="Entry Status">`;
+    html += `<option value="normal" ${!entry.constant && !entry.vectorized ? 'selected' : ''}>🟢 Normal</option>`;
+    html += `<option value="constant" ${entry.constant ? 'selected' : ''}>🔵 Constant</option>`;
+    html += `<option value="vectorized" ${entry.vectorized ? 'selected' : ''}>🔗 Vectorized</option>`;
+    html += `</select></div>`;
+    html += `<div class="rpg-lb-field-group sm"><div class="rpg-lb-field-label"><i class="fa-solid fa-fingerprint"></i> UID</div><input class="rpg-lb-input" type="text" value="${uid}" disabled style="opacity:0.5;text-align:center;"></div>`;
+    html += `<div class="rpg-lb-field-group md"><div class="rpg-lb-field-label"><i class="fa-solid fa-location-dot"></i> Position</div>`;
+    html += `<select class="rpg-lb-select rpg-lb-position-select" data-world="${w}" data-uid="${uid}" data-field="position">`;
+    html += `<option value="0" data-role="" ${posVal == 0 ? 'selected' : ''}>↑Char — Before Char Defs</option>`;
+    html += `<option value="1" data-role="" ${posVal == 1 ? 'selected' : ''}>↓Char — After Char Defs</option>`;
+    html += `<option value="2" data-role="" ${posVal == 2 ? 'selected' : ''}>↑AN — Before Author's Note</option>`;
+    html += `<option value="3" data-role="" ${posVal == 3 ? 'selected' : ''}>↓AN — After Author's Note</option>`;
+    html += `<option value="4" data-role="0" ${posVal == 4 && roleVal == 0 ? 'selected' : ''}>@D ⚙️ — At Depth (System)</option>`;
+    html += `<option value="4" data-role="1" ${posVal == 4 && roleVal == 1 ? 'selected' : ''}>@D 👤 — At Depth (User)</option>`;
+    html += `<option value="4" data-role="2" ${posVal == 4 && roleVal == 2 ? 'selected' : ''}>@D 🤖 — At Depth (Assistant)</option>`;
+    html += `<option value="5" data-role="" ${posVal == 5 ? 'selected' : ''}>↑EM — Before Examples</option>`;
+    html += `<option value="6" data-role="" ${posVal == 6 ? 'selected' : ''}>↓EM — After Examples</option>`;
+    html += `<option value="7" data-role="" ${posVal == 7 ? 'selected' : ''}>➡️ Outlet</option>`;
+    html += '</select></div>';
+    html += `<div class="rpg-lb-field-group sm"><div class="rpg-lb-field-label"><i class="fa-solid fa-layer-group"></i> Depth</div><input class="rpg-lb-input rpg-lb-number" type="number" value="${entry.depth ?? 4}" data-world="${w}" data-uid="${uid}" data-field="depth"></div>`;
+    html += '</div>';
 
-    body += `<div class="rpg-lb-keywords-card">`;
-    body += `<div class="rpg-lb-kw-section"><div class="rpg-lb-kw-section-header"><div class="rpg-lb-field-label"><i class="fa-solid fa-key"></i> Primary Keywords</div></div>`;
-    body += `<textarea class="rpg-lb-input rpg-lb-kw-textarea" data-world="${w}" data-uid="${uid}" data-field="key" rows="2" placeholder="Comma-separated keywords">${(entry.key || []).join(', ')}</textarea></div>`;
-    body += `<div class="rpg-lb-kw-section"><div class="rpg-lb-kw-section-header"><div class="rpg-lb-field-label"><i class="fa-solid fa-key"></i> Secondary Keywords</div>`;
-    body += `<select class="rpg-lb-kw-logic-select" data-world="${w}" data-uid="${uid}" data-field="selectiveLogic">`;
-    body += `<option value="0" ${entry.selectiveLogic == 0 ? 'selected' : ''}>AND ANY</option>`;
-    body += `<option value="1" ${entry.selectiveLogic == 1 ? 'selected' : ''}>AND ALL</option>`;
-    body += `<option value="2" ${entry.selectiveLogic == 2 ? 'selected' : ''}>NOT ALL</option>`;
-    body += `<option value="3" ${entry.selectiveLogic == 3 ? 'selected' : ''}>NOT ANY</option>`;
-    body += `</select></div>`;
-    body += `<textarea class="rpg-lb-input rpg-lb-kw-textarea secondary" data-world="${w}" data-uid="${uid}" data-field="keysecondary" rows="2" placeholder="Comma-separated secondary keywords">${(entry.keysecondary || []).join(', ')}</textarea></div>`;
-    body += `</div>`;
+    html += `<div class="rpg-lb-form-row rpg-lb-outlet-row" ${posVal != 7 ? 'style="display:none;"' : ''}>`;
+    html += `<div class="rpg-lb-field-group"><div class="rpg-lb-field-label"><i class="fa-solid fa-plug"></i> Outlet Name</div>`;
+    html += `<input class="rpg-lb-input" type="text" value="${escapeHtml(entry.outletName || '')}" data-world="${w}" data-uid="${uid}" data-field="outletName" placeholder="Outlet Name"></div>`;
+    html += '</div></div>';
 
-    body += `<div class="rpg-lb-form-section"><div class="rpg-lb-field-label"><i class="fa-solid fa-align-left"></i> Content</div>`;
+    // 3. Keywords row: Primary, Booleans/Logic in between, Secondary
+    html += '<div class="rpg-lb-keywords-card compact-row">';
+    html += '<div class="rpg-lb-kw-section"><div class="rpg-lb-kw-section-header"><div class="rpg-lb-field-label"><i class="fa-solid fa-key"></i> Primary Keywords</div></div>';
+    html += `<textarea class="rpg-lb-input rpg-lb-kw-textarea" data-world="${w}" data-uid="${uid}" data-field="key" rows="2" placeholder="Comma-separated keywords">${(entry.key || []).join(', ')}</textarea></div>`;
+
+    html += '<div class="rpg-lb-kw-booleans">';
+    html += `<div class="rpg-lb-field-label"><i class="fa-solid fa-code-branch"></i> Logic</div>`;
+    html += `<select class="rpg-lb-kw-logic-select" data-world="${w}" data-uid="${uid}" data-field="selectiveLogic">`;
+    html += `<option value="0" ${entry.selectiveLogic == 0 ? 'selected' : ''}>AND ANY</option>`;
+    html += `<option value="1" ${entry.selectiveLogic == 1 ? 'selected' : ''}>AND ALL</option>`;
+    html += `<option value="2" ${entry.selectiveLogic == 2 ? 'selected' : ''}>NOT ALL</option>`;
+    html += `<option value="3" ${entry.selectiveLogic == 3 ? 'selected' : ''}>NOT ANY</option>`;
+    html += '</select>';
+    html += `<label class="rpg-lb-wi-checkbox" style="margin-top: 6px;"><input type="checkbox" ${entry.selective ? 'checked' : ''} data-world="${w}" data-uid="${uid}" data-field="selective"><span class="rpg-lb-check-box"><i class="fa-solid fa-check"></i></span> Selective</label>`;
+    html += '</div>';
+
+    html += '<div class="rpg-lb-kw-section"><div class="rpg-lb-kw-section-header"><div class="rpg-lb-field-label"><i class="fa-solid fa-key"></i> Secondary Keywords</div></div>';
+    html += `<textarea class="rpg-lb-input rpg-lb-kw-textarea secondary" data-world="${w}" data-uid="${uid}" data-field="keysecondary" rows="2" placeholder="Comma-separated secondary keywords">${(entry.keysecondary || []).join(', ')}</textarea></div>`;
+    html += '</div>';
+	
+	body += `<div class="rpg-lb-form-section">`;
+    body += `<div class="rpg-lb-field-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">`;
+    body += `<span><i class="fa-solid fa-align-left"></i> Content</span>`;
+    body += `<button type="button" class="rpg-lb-btn-popout" data-world="${w}" data-uid="${uid}" style="background: rgba(74, 123, 167, 0.15); border: 1px solid rgba(74, 123, 167, 0.3); color: #ccc; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 0.9em; transition: background 0.2s;"><i class="fa-solid fa-expand"></i> Pop-out Editor</button>`;
+    body += `</div>`;	
+	
     body += `<textarea class="rpg-lb-textarea" data-world="${w}" data-uid="${uid}" data-field="content" rows="4">${escapeHtml(entry.content || '')}</textarea>`;
     body += `<div class="rpg-lb-content-footer">`;
     body += `<span class="rpg-lb-token-count"><i class="fa-solid fa-coins"></i> ~${tokEst} tokens</span>`;

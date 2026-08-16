@@ -398,3 +398,32 @@
     border-color: rgba(46, 204, 113, 0.5);
     background: rgba(46, 204, 113, 0.1);
 }
+
+.rpg-lb-keywords-card.compact-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    margin-bottom: 8px;
+}
+
+.rpg-lb-keywords-card.compact-row .rpg-lb-kw-section {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.rpg-lb-keywords-card.compact-row .rpg-lb-kw-textarea {
+    flex: 1;
+    resize: vertical;
+}
+
+.rpg-lb-kw-booleans {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    min-width: 100px;
+    padding: 0 4px;
+}
