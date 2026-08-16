@@ -1428,8 +1428,6 @@ export function initLorebookEventDelegation() {
             }
         });
     });
-	
-	
 
     $modal.on('click', '.rpg-lb-fpill', function () {
         const filter = $(this).data('filter');
