@@ -1,4 +1,4 @@
-# Lore Library & Campaign Manager
+# Lore Library Lite
 
 An enhanced Lorebook and Campaign Manager extension for **SillyTavern**. 
 It provides a full-featured three-panel desktop layout and an adaptive mobile interface to replace the native World Info interface with streamlined organization, bulk actions, and deep entry editing.
@@ -25,7 +25,7 @@ Warning: This code is heavily altered from the original project as it was not wr
   * Delete Lorebook now requires the lorebook to be completely empty before you can delete the lorebook. You will need to delete all entries first. This is to ensure an accidental click and approval when you're trying to delete one entry doesn't delete your entire lorebook.
     
 * **Standalone**
-  * To operate as a standalone, numerous storage and theming issues, as well as structural issues had to be resolved. Therefore the theme is different (more pleasing IMHO) as well as it does not have an on/off toggle. It hooks in a little better to the button.
+  * To operate as a standalone, numerous storage and theming issues, as well as structural issues had to be resolved. Therefore the theme is different as well as it does not have an on/off toggle. It hooks in a little better to the button.
 
 ## Key Features
 
