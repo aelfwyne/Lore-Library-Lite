@@ -185,6 +185,7 @@ function buildEntryHtml(worldName, uid, entry) {
     body += `<div class="rpg-lb-field-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">`;
     body += `<span><i class="fa-solid fa-align-left"></i> Content</span>`;
     body += `<button type="button" class="rpg-lb-btn-popout" data-world="${w}" data-uid="${uid}" style="background: rgba(74, 123, 167, 0.15); border: 1px solid rgba(74, 123, 167, 0.3); color: #ccc; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 0.9em; transition: background 0.2s;"><i class="fa-solid fa-expand"></i> Pop-out Editor</button>`;
+    body += `<button type="button" class="rpg-lb-btn-xmlform" data-world="${w}" data-uid="${uid}" style="background: rgba(74, 123, 167, 0.15); border: 1px solid rgba(74, 123, 167, 0.3); color: #ccc; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 0.9em; transition: background 0.2s; margin-left: 6px;" title="Build a form from the XML tags in this entry's content"><i class="fa-solid fa-code"></i> XML Form Editor</button>`;
     body += `</div>`;	
 	
     body += `<textarea class="rpg-lb-textarea" data-world="${w}" data-uid="${uid}" data-field="content" rows="4">${escapeHtml(entry.content || '')}</textarea>`;

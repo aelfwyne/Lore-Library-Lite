@@ -17,6 +17,8 @@ import * as campaignManager from './campaignManager.js';
 import { getLorebookModal } from './lorebookModal.js';
 import { renderMobileLorebook, initMobileLorebookEventDelegation } from './lorebookMobile.js';
 import { escapeHtml } from './utils.js';
+import { openXmlFormEditor, isXmlFormEditorOpen, closeXmlFormEditor } from './lorebookXmlEditor.js';
+import { refreshPopoutHighlight, expandAllPopoutFolds } from './lorebookPopoutHighlight.js';
 
 const CAMPAIGN_ICONS = [
     'fa-dragon', 'fa-hat-wizard', 'fa-wand-sparkles', 'fa-shield-halved',
@@ -496,6 +498,7 @@ function buildEditorHtml(worldName, uid, entry, isExpanded) {
     html += '<div class="rpg-lb-field-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">';
     html += '<span><i class="fa-solid fa-align-left"></i> Content</span>';
     html += `<button type="button" class="rpg-lb-btn-popout" data-world="${w}" data-uid="${uid}" style="background: rgba(74, 123, 167, 0.15); border: 1px solid rgba(74, 123, 167, 0.3); color: #ccc; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 0.9em; transition: background 0.2s;"><i class="fa-solid fa-expand"></i> Pop-out Editor</button>`;
+    html += `<button type="button" class="rpg-lb-btn-xmlform" data-world="${w}" data-uid="${uid}" style="background: rgba(74, 123, 167, 0.15); border: 1px solid rgba(74, 123, 167, 0.3); color: #ccc; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 0.9em; transition: background 0.2s; margin-left: 6px;" title="Build a form from the XML tags in this entry's content"><i class="fa-solid fa-code"></i> XML Form Editor</button>`;
     html += '</div>';
 
     html += `<textarea class="rpg-lb-textarea" data-world="${w}" data-uid="${uid}" data-field="content" rows="${isExpanded ? 10 : 5}">${escapeHtml(entry.content || '')}</textarea>`;
@@ -794,10 +797,18 @@ export function initLorebookEventDelegation() {
 
         $('#rpg-lb-popout-textarea').val(popoutState.originalText);
         $('#rpg-lb-popout-modal').css('display', 'flex');
+        refreshPopoutHighlight();
+    });
+
+    $modal.on('click', '.rpg-lb-btn-xmlform', function (e) {
+        e.preventDefault();
+        const $sourceTextarea = $(this).closest('.rpg-lb-form-section').find('textarea[data-field="content"]');
+        openXmlFormEditor($sourceTextarea.get(0));
     });
 
     function closePopoutEditor(force = false) {
         if (!popoutState.isOpen) return;
+        expandAllPopoutFolds(); // never let a collapsed "<tag>…</tag>" stub leak into a save/dirty-check
         const currentText = $('#rpg-lb-popout-textarea').val();
 
         if (!force && currentText !== popoutState.originalText) {
@@ -816,7 +827,8 @@ export function initLorebookEventDelegation() {
 
     function savePopoutEditor() {
         if (!popoutState.isOpen) return;
-        
+
+        expandAllPopoutFolds(); // ditto — the saved text must be the real content, never a fold stub
         const newText = $('#rpg-lb-popout-textarea').val();
         popoutState.$sourceTextarea.val(newText).trigger('input'); 
         popoutState.originalText = newText;
@@ -832,6 +844,7 @@ export function initLorebookEventDelegation() {
     });
 
     $('body').off('click', '#rpg-lb-popout-discard').on('click', '#rpg-lb-popout-discard', function() {
+        expandAllPopoutFolds(); // so a "just collapsed, nothing else changed" state isn't seen as dirty
         const currentText = $('#rpg-lb-popout-textarea').val();
         if (currentText !== popoutState.originalText) {
             if (confirm("Are you sure you want to discard your changes?")) {
@@ -965,7 +978,10 @@ export function initLorebookEventDelegation() {
         if (e.key === 'Escape') {
             const modal = getLorebookModal();
             if (modal && modal.isOpen()) {
-                if (expandedEditor) {
+                if (isXmlFormEditorOpen()) {
+                    closeXmlFormEditor(false);
+                    e.stopImmediatePropagation();
+                } else if (expandedEditor) {
                     expandedEditor = false;
                     renderLorebook();
                     e.stopImmediatePropagation();

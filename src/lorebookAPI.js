@@ -274,13 +274,17 @@ const LORE_TYPE_INSTRUCTIONS = {
 
 
 const STRICT_XML_TEMPLATES = {
-    'NPC': `Output strictly using the predefined XML template below. Use brief descriptive words and phrases rather than narrative prose to minimize token count without losing content. Do not overly explain traits. If the user has requested expansion, addition, updating or elaboration, then use chat and lore context to fill or create missing information, inferring missing information based on known attributes or likely values.
+    'NPC': `Output strictly using the predefined XML template below. Use brief descriptive words and phrases rather than narrative prose to minimize token count without losing content. Do not overly explain traits. 
+
+CRITICAL PRESERVATION INSTRUCTION: You MUST PRESERVE established core attributes, especially within <psychology>, <behaviors>, <appearance>, and <background>. DO NOT rewrite, alter, or "refresh" existing personality traits, alignment, or history just because you are updating the card. Only modify these core fields if the recent chat history explicitly dictates a permanent character change. Physical developmental changes related to a change in life stage are allowable.
+
+If the user has requested expansion, addition, updating or elaboration, then use chat and lore context to fill or create missing information, inferring missing information based on known attributes or likely values.
 
 Map synonymous attributes to their corresponding canonical tags (e.g., map "race" to <species>, "hometown" to <home>, etc.). Any additional details, traits, or attributes that do not clearly fit into the predefined schema MUST be placed inside <extra> using clean, descriptive sub-tags (e.g., <extra><title>...</title><weapon>...</weapon></extra>). 
 
-Enumerate children sequentially inside <children> using self-closing tags (<child_1 name="" gender="" species="" dob="" />, <child_2 ... />, etc.). If none exist, leave <children></children> empty.
+Enumerate family members (children, siblings, parents) sequentially inside their parent tags with age and gender.
 
-CRITICAL INSTRUCTION FOR PERSISTENT NOTES: If the target entry contains a <persistent_notes> section, you MUST preserve the entire tag and its exact text content word-for-word without adding, modifying, or deleting anything inside it. If it was empty or not present, leave <persistent_notes></persistent_notes> empty.
+CRITICAL INSTRUCTION FOR PERSISTENT NOTES: If the target entry contains a <persistent_notes> section, you MUST preserve the entire tag and its exact text content word-for-word without adding, modifying, or deleting anything inside it. If it was empty or not present, leave <persistent_notes></persistent_notes> empty. 
 
 Do not modify the predefined XML structure or add new parent tags.
 
@@ -290,12 +294,12 @@ Do not modify the predefined XML structure or add new parent tags.
 <species></species>
 <gender></gender>
 <age></age>
+<chronological_age></chronological_age>
 <birthdate></birthdate>
-<mother></mother>
-<father></father>
+<parents>
+</parents>
 <spouse></spouse>
 <children>
-\t<child_1 name="" gender="" species="" dob="" status="" />
 </children>
 <home></home>
 <birthplace></birthplace>
@@ -310,7 +314,6 @@ Do not modify the predefined XML structure or add new parent tags.
 \t<skin></skin>
 \t<clothing></clothing>
 \t<presence></presence>
-\t<genitalia></genitalia>
 </appearance>
 
 <psychology>
@@ -319,12 +322,14 @@ Do not modify the predefined XML structure or add new parent tags.
 \t<dislikes></dislikes>
 \t<fears></fears>
 \t<morality></morality>
+\t<alignment></alignment>
 </psychology>
 
 <behaviors>
 \t<mannerisms></mannerisms>
 \t<speech_style></speech_style>
 \t<combat_style></combat_style>
+\t<flaws></flaws>
 </behaviors>
 
 <abilities>
@@ -341,6 +346,10 @@ Do not modify the predefined XML structure or add new parent tags.
 \t<allies></allies>
 \t<friends></friends>
 \t<rivals></rivals>
+
+\t<siblings>
+\t</siblings>
+
 </relationships>
 
 <goals>

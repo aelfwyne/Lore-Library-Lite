@@ -971,3 +971,271 @@
         padding: 6px 6px !important;
     }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   XML Form Editor (isolated — styling for src/lorebookXmlEditor.js only)
+   ───────────────────────────────────────────────────────────────────────── */
+.rpg-lb-xmlform-content {
+    width: 900px;
+    max-width: 92vw;
+    height: 85vh;
+    max-height: 900px;
+}
+.rpg-lb-xmlform-body {
+    padding: 16px;
+}
+.rpg-lb-xmlform-footer {
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.rpg-lb-xmlform-hint {
+    font-size: 0.75em;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rpg-lb-xmlform-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.rpg-lb-xmlform-nested {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border-left: 2px solid rgba(74, 123, 167, 0.3);
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 0 6px 6px 0;
+}
+.rpg-lb-xmlform-empty {
+    font-size: 0.78em;
+    color: #666;
+    font-style: italic;
+    padding: 4px 0;
+}
+
+.rpg-lb-xmlform-field {
+    border: 1px solid rgba(74, 123, 167, 0.15);
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.02);
+}
+.rpg-lb-xmlform-loosetext {
+    border-style: dashed;
+    opacity: 0.9;
+}
+.rpg-lb-xmlform-field-header {
+    margin-bottom: 8px;
+}
+.rpg-lb-xmlform-tag-label {
+    font-family: monospace;
+    font-size: 0.85em;
+    color: #8fb8e0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rpg-lb-xmlform-attr-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.rpg-lb-xmlform-attr {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 0 0 160px;
+}
+.rpg-lb-xmlform-attr-name {
+    font-size: 0.68em;
+    color: #888;
+    font-family: monospace;
+}
+
+.rpg-lb-xmlform-textarea {
+    resize: vertical;
+    font-family: monospace;
+}
+
+.rpg-lb-xmlform-error {
+    border: 1px solid rgba(233, 69, 96, 0.4);
+    background: rgba(233, 69, 96, 0.08);
+    border-radius: 8px;
+    padding: 14px 16px;
+}
+.rpg-lb-xmlform-error-title {
+    color: #e94560;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.rpg-lb-xmlform-error-snippet {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 0.85em;
+    color: #ddd;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 0 0 10px 0;
+}
+.rpg-lb-xmlform-error-details {
+    font-size: 0.78em;
+    color: #aaa;
+    margin-bottom: 10px;
+}
+.rpg-lb-xmlform-error-details pre {
+    white-space: pre-wrap;
+    margin: 6px 0 0 0;
+}
+.rpg-lb-xmlform-error-hint {
+    font-size: 0.8em;
+    color: #ccc;
+    margin: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Pop-out Editor Syntax Highlighting (isolated — src/lorebookPopoutHighlight.js)
+   ───────────────────────────────────────────────────────────────────────── */
+.rpg-lb-popout-highlight-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: block;
+}
+.rpg-lb-popout-highlight-wrap.rpg-lb-popout-highlighted {
+    /* The dark "field" fill lives here, on a plain non-text box, not on
+       the backdrop below. Painting a semi-transparent background behind
+       multi-line wrapped text causes visible seams between text rows in
+       some browsers (each wrapped line can be painted as a separate
+       fragment); a single flat fill on an empty box has no such seams. */
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+}
+.rpg-lb-popout-highlight-backdrop {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    box-sizing: border-box;
+    border-style: solid;
+    border-color: transparent;
+    box-shadow: none;
+    outline: none;
+    text-decoration: none;
+    background: none;
+    color: #ddd;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+    display: none;
+}
+.rpg-lb-popout-highlight-backdrop code {
+    /* Force block display: <code> is inline by default, and this app's
+       global styling for inline code snippets (background/border/etc.)
+       is very likely applied to <code> elements. An inline element that
+       contains forced multi-line content gets rendered as one fragment
+       PER LINE, each independently picking up that inline styling —
+       which shows up as a horizontal rule-like seam under every single
+       line. Forcing block display stops the per-line fragmentation
+       entirely, and the resets below strip any such inherited styling
+       outright as a second line of defense. */
+    display: block;
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    box-shadow: none;
+    outline: none;
+    text-decoration: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    white-space: inherit;
+    word-wrap: inherit;
+    overflow-wrap: inherit;
+}
+.rpg-lb-popout-highlight-wrap #rpg-lb-popout-textarea {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    margin: 0;
+}
+.rpg-lb-popout-highlight-wrap.rpg-lb-popout-highlighted #rpg-lb-popout-textarea {
+    background: transparent !important;
+    color: transparent !important;
+    caret-color: #fff;
+}
+.rpg-lb-popout-highlight-wrap.rpg-lb-popout-highlighted #rpg-lb-popout-textarea::selection {
+    background: rgba(74, 123, 167, 0.45);
+}
+
+.rpg-hl-tag { color: #7ec1e8; font-weight: 600; }
+.rpg-hl-attr-name { color: #d9b26a; }
+.rpg-hl-attr-value { color: #9fd68c; }
+.rpg-hl-punct { color: #888; }
+.rpg-hl-comment { color: #7a9d6e; font-style: italic; }
+.rpg-hl-key { color: #7ec1e8; font-weight: 600; }
+.rpg-hl-value { color: #ddd; }
+.rpg-hl-tag, .rpg-hl-attr-name, .rpg-hl-attr-value, .rpg-hl-punct,
+.rpg-hl-comment, .rpg-hl-key, .rpg-hl-value {
+    background: none;
+    border: none;
+    box-shadow: none;
+    outline: none;
+    text-decoration: none;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+}
+
+/* Fold gutter: sits on top (above the textarea) so its buttons are
+   clickable, but the layer itself is click-through everywhere except
+   the small buttons, so normal editing anywhere else is unaffected. */
+.rpg-lb-popout-fold-gutter {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 2;
+    display: none;
+}
+.rpg-lb-popout-fold-toggle {
+    position: absolute;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    line-height: 12px;
+    padding: 0;
+    margin: 0;
+    background: rgba(74, 123, 167, 0.25);
+    border: 1px solid rgba(74, 123, 167, 0.45);
+    border-radius: 3px;
+    color: #cfe3f5;
+    font-size: 9px;
+    text-align: center;
+    cursor: pointer;
+    pointer-events: auto;
+}
+.rpg-lb-popout-fold-toggle:hover {
+    background: rgba(74, 123, 167, 0.45);
+}
+
+/* Off-screen measuring element used only to compute where wrapped lines
+   fall vertically, so gutter buttons line up correctly even when an
+   earlier line soft-wraps. Never visible. */
+.rpg-lb-popout-highlight-measure {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    visibility: hidden;
+    pointer-events: none;
+}

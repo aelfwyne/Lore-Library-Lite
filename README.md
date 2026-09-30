@@ -17,6 +17,9 @@ Warning: This code is heavily altered from the original project as it was not wr
 ![Preview Image](preview.png)
 
 ## Changes
+* **Update 3.2 Editor Update
+  * The popout editor has been updated to support xml syntax hilighting.
+  * Minor changes to the strict XML template for NPC generation.
 * **Update 3.1 Bug Fix Update**
   * Attention paid to Mobile Rendering - should now be usable on tablet and phone sized screens. This was previously borked.
   * Full Screen toggle added for desktop screens to use ALL viewport space.
